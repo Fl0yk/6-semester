@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34330.188
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CaesarСipher(lab_1)", "CaesarСipher(lab_1)\CaesarСipher(lab_1).csproj", "{7AEF6C57-AE96-4F65-A32D-AC3DFFDCED38}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CaesarСipher(lab_1)", "CaesarСipher(lab_1)\CaesarСipher(lab_1).csproj", "{7AEF6C57-AE96-4F65-A32D-AC3DFFDCED38}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kerberos(lab_2)", "Kerberos(lab_2)\Kerberos(lab_2).csproj", "{6CC94936-06A5-4F7D-A23C-2774F7222F68}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{7AEF6C57-AE96-4F65-A32D-AC3DFFDCED38}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7AEF6C57-AE96-4F65-A32D-AC3DFFDCED38}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7AEF6C57-AE96-4F65-A32D-AC3DFFDCED38}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6CC94936-06A5-4F7D-A23C-2774F7222F68}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6CC94936-06A5-4F7D-A23C-2774F7222F68}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6CC94936-06A5-4F7D-A23C-2774F7222F68}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6CC94936-06A5-4F7D-A23C-2774F7222F68}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
