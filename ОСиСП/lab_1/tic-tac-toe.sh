@@ -12,6 +12,15 @@ function print_board {
     echo "---|---|---"
 }
 
+function make_screenshot {
+    echo " ${board[0]} | ${board[1]} | ${board[2]} " > result.txt
+    echo "---|---|---"  >> result.txt
+    echo " ${board[3]} | ${board[4]} | ${board[5]} "  >> result.txt
+    echo "---|---|---"  >> result.txt
+    echo " ${board[6]} | ${board[7]} | ${board[8]} "  >> result.txt
+    echo "---|---|---"  >> result.txt
+}
+
 #Функция вывода сообщения при окончании игры
 function end_game {
     local message=$1
@@ -82,6 +91,7 @@ function take_turn {
         take_turn $player $marker
     else
         board[$((position-1))]=$marker
+        make_screenshot
         check_win $player $marker
     fi
 }
