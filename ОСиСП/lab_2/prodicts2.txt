@@ -1,4 +1,4 @@
-"Product 5" 12 10
-"Prod 3" 1 5
-"Prod 1" 4 12
-"Prod" 11 6
+"Product 5"|12|10
+"Prod 3"|1|8
+"Prod 1"|4|12
+"Prod"|11|6
