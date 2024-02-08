@@ -51,3 +51,36 @@ fi
 echo ================
 patter='^"[A-Za-z ]+" [[:digit:]]+$'
 awk "/$patter/" test.txt
+
+
+function robot_turn{
+    if [ $turn_id -eq 1 ]
+    then
+        board[0]="X"
+        (( turn_id++ ))
+    elif [ $turn_id -eq 2 ]
+    then
+        if [ ${board[8]} != " " ]
+        then
+            board[2]="X"
+        else
+            board[8]="X"
+        fi
+    elif [ $turn_id -eq 3 ]
+    #Возможные ходы человека: 1 2 3 5 6 7
+        if [ ${board[1]} != " " ]
+        then
+            board[7]="X"
+        elif [ ${board[2]} != " " ]
+            board[6]="X"
+        elif [ ${board[3] != " "} ]
+            board[5]="X"
+        elif [ ${board[5] != " "} ]
+            board[3]="X"
+        elif [ ${board[6] != " "} ]
+            board[2]="X"
+        elif [ ${board[7] != " "} ]
+            board[1]="X"
+        fi
+    fi
+}

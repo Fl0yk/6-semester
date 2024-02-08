@@ -3,6 +3,51 @@
 #объявляем переменную массивом (она будет глобальной)
 declare -a board=(" " " " " " " " " " " " " " " " " ")
 
+function block_player {
+    local marker="X"
+
+    # Попытка заблокировать игрока
+    for (( k=0; k<9; k++ ))
+    do
+        if [ "${board[$k]}" == " " ]
+        then
+            board[$k]="O" 
+            check_win 1 "O"
+            tmp=$?
+            
+            if [[ $tmp -eq 0 || $tmp -eq 2 ]]
+            then
+                board[$k]=$marker
+                return
+            else
+                board[$k]=" "
+            fi
+        fi
+    done
+    return 1
+}
+
+function rand_turn {
+    local marker="X"
+
+    if [ "${board[4]}" == " " ]
+    then
+        board[4]=$marker
+        return
+    fi
+    rand_id=$RANDOM
+    let "number %= 8"
+    let "number += 1"
+    while [ "${board[$rand_id]}" != " " ]
+    do
+        rand_id=$RANDOM
+        let "number %= 8"
+        let "number += 1"
+    done
+
+    board[$rand_id]=$marker
+}
+
 function print_board {
     echo " ${board[0]} | ${board[1]} | ${board[2]} "
     echo "---|---|---"
@@ -27,6 +72,7 @@ function end_game {
     clear
     echo " $message"
     print_board
+    make_screenshot
     #Используется для завершения сценария
     exit
 }
@@ -41,7 +87,8 @@ function check_win {
     do
         if [[ ${board[$((i*3))]} == $marker && ${board[$((i*3+1))]} == $marker && ${board[$((i*3+2))]} == $marker ]]
         then
-            end_game "Победил игрок $player"
+            #end_game "Победил игрок $player"
+            return 0
         fi
     done
 
@@ -50,19 +97,22 @@ function check_win {
     do
         if [[ ${board[$((i))]} == $marker && ${board[$((i+3))]} == $marker && ${board[$((i+6))]} == $marker ]]
         then
-            end_game "Победил игрок $player"
+            #end_game "Победил игрок $player"
+            return 0
         fi
     done
 
     #Проверяем диагонали
     if [[ ${board[$((0))]} == $marker  &&  ${board[$((4))]} == $marker  &&  ${board[$((8))]} == $marker ]]
     then
-        end_game "Победил игрок $player"
+        #end_game "Победил игрок $player"
+        return 0
     fi
 
     if [[ ${board[$((2))]} == $marker && ${board[$((4))]} == $marker && ${board[$((6))]} == $marker ]]
     then
-        end_game "Победил игрок $player"
+        #end_game "Победил игрок $player"
+        return 0
     fi
 
     #Проверка на ничью(должна быть хоть одна пустая ячейка)
@@ -70,12 +120,13 @@ function check_win {
     do
         if [ "$cell" == " " ]
         then
-            return 0
+            return 1
         fi
     done
 
     #Раз нет пустых и никто не выйграл, то ничья поучается
-    end_game "Ничья!"
+    #end_game "Ничья!"
+    return 2
 }
 
 function take_turn {
@@ -91,8 +142,8 @@ function take_turn {
         take_turn $player $marker
     else
         board[$((position-1))]=$marker
-        make_screenshot
-        check_win $player $marker
+        #make_screenshot
+        #check_win $player $marker
     fi
 }
 
@@ -101,12 +152,40 @@ function game {
     do
         clear
         print_board
-        take_turn 1 "X"
+        make_screenshot
+
+        #Ход компьютера
+        block_player || rand_turn
         
+        check_win 1 "X"
+        tmp=$?
+        if [ $tmp -eq 0 ]
+        then
+            end_game "Победил бот"
+        fi
+        if [ $tmp -eq 2 ]
+        then
+            end_game "Ничья"
+        fi
+
         clear
         print_board
+        make_screenshot
+
+        #Ход игрока
         take_turn 2 "O"
+        check_win 2 "O"
+        tmp=$?
+        if [ $tmp -eq 0 ]
+        then
+            end_game "Победил человек"
+        fi
+        if [ $tmp -eq 2 ]
+        then
+            end_game "Ничья"
+        fi
     done
 }
+
 
 game
