@@ -14,7 +14,11 @@ namespace Kerberos_lab_2_
         public const int TicketGrantingServicePort = 1002;
         public const int ServiceServerPort = 1003;
 
-        public const string KDCKey = "kdckey";
+        public const string KDCKey =        "aacgkdcbghkeynky";
+        public const string SessionKey =    "arsessionffkeyvg";
+        public const string ServiceKey =    "tyservicenhkeycg";
+        public const string ClientKey =     "qclientbfkeypgbt";
+        public const string ServiceSessionKey = "servicesessionke";
 
         public static readonly int BaseDuration = 600;
 

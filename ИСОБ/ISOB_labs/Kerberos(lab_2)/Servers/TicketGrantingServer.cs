@@ -9,7 +9,7 @@ namespace Kerberos_lab_2_.Servers
     //Будет выдавать TGS
     internal class TicketGrantingServer
     {
-        private const string _key = "";
+        private const string _key = Configuration.KDCKey;
         public async Task Listen(CancellationToken token)
         {
             UdpClient udpClient = new(Configuration.TGServerEP);
@@ -37,9 +37,10 @@ namespace Kerberos_lab_2_.Servers
                 TGServerRequest data = tgsRequest.Data!;
                 
                 string servicePrincipal = data.ServicePrincipal;
-                Authenticator userAuth = JsonSerializer.Deserialize<Authenticator>(data.AuthEncryptBySessionKey.GetJsonString())!;
                 //Расшифровываем tgt при помощи ключа kdc
-                TicketGrantingTicket tgt = JsonSerializer.Deserialize<TicketGrantingTicket>(data.TGTEncryptByKDC.GetJsonString())!;
+                TicketGrantingTicket tgt = JsonSerializer.Deserialize<TicketGrantingTicket>(data.TGTEncryptByKDC.GetJsonString(_key))!;
+                string sessionKey = tgt.SessionKey;
+                Authenticator userAuth = JsonSerializer.Deserialize<Authenticator>(data.AuthEncryptBySessionKey.GetJsonString(sessionKey))!;
                 
                 if (tgt.TimeStamp.AddSeconds(tgt.Duration)  < DateTime.Now   //Если билет протух
                     || tgt.Principal != userAuth.Principal)                 //Если принципалы не совпадают
@@ -52,12 +53,10 @@ namespace Kerberos_lab_2_.Servers
                     continue;
                 }
 
-                //Генерируем сессионый ключ сервиса(надо)
+                ServiceTicket st = new(Configuration.ServiceSessionKey, userAuth.Principal, Configuration.BaseDuration);
 
-                ServiceTicket st = new("sessionservicekey", userAuth.Principal, Configuration.BaseDuration);
-
-                byte[] stByServiceKey = JsonSerializer.Serialize(st).GetBytes();
-                byte[] stBySessionKey = JsonSerializer.Serialize(st).GetBytes();
+                byte[] stByServiceKey = JsonSerializer.Serialize(st).GetDesEncryptBytes(_key);
+                byte[] stBySessionKey = JsonSerializer.Serialize(st).GetDesEncryptBytes(sessionKey);
 
                 TGServerResponse response = new(servicePrincipal, stBySessionKey, stByServiceKey);
 

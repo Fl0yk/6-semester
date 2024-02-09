@@ -7,7 +7,8 @@ namespace Kerberos_lab_2_.Servers
 {
     internal class ServiceServer
     {
-        private string _message = "Hello!";
+        private string _message = "Hello from service!";
+        private string _key = Configuration.ServiceKey;
 
         public async Task Listen(CancellationToken token)
         {
@@ -36,10 +37,10 @@ namespace Kerberos_lab_2_.Servers
                 AppServerRequest data = appRequest.Data!;
 
                 //Расшифровываем tgt при помощи ключа kdc
-                TicketGrantingTicket tgs = JsonSerializer.Deserialize<TicketGrantingTicket>(data.TGSEncryptByServiceKey.GetJsonString())!;
-                string serviceSessionKey = tgs.SessionKey;
+                ServiceTicket tgs = JsonSerializer.Deserialize<ServiceTicket>(data.TGSEncryptByServiceKey.GetJsonString(_key))!;
+                string serviceSessionKey = tgs.ServiceSessionKey;
 
-                Authenticator userAuth = JsonSerializer.Deserialize<Authenticator>(data.AuthEncryptBySessionServiceKey.GetJsonString())!;
+                Authenticator userAuth = JsonSerializer.Deserialize<Authenticator>(data.AuthEncryptBySessionServiceKey.GetJsonString(serviceSessionKey))!;
                 
 
                 if (tgs.TimeStamp.AddSeconds(tgs.Duration) < DateTime.Now   //Если билет протух
@@ -53,7 +54,7 @@ namespace Kerberos_lab_2_.Servers
                     continue;
                 }
 
-                AppServerResponse response = new(JsonSerializer.Serialize(_message).GetBytes());
+                AppServerResponse response = new(JsonSerializer.Serialize(_message).GetDesEncryptBytes(serviceSessionKey));
 
                 await udpClient.SendAsync(new ResponseData<AppServerResponse>() { Data = response, IsSuccess = true }.GetBytes(), endPoint);
             }

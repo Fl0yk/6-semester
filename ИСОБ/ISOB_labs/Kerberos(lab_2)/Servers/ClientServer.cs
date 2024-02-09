@@ -8,7 +8,7 @@ namespace Kerberos_lab_2_.Servers
 {
     internal class ClientServer
     {
-        private const string _key = "";
+        private const string _key = Configuration.ClientKey;
         private string _login = "Miha";
         public async Task Listen(CancellationTokenSource cancelTokenSource)
         {
@@ -24,6 +24,8 @@ namespace Kerberos_lab_2_.Servers
 
             await udpClient.SendAsync(data, Configuration.AuthEP);
             //await Task.Delay(2000);
+            await Console.Out.WriteLineAsync("==================================\n" +
+                "Клиент отправил запрос на аутентификацию с принипалом Miha и временем жизни 5 минут");
             var response = await udpClient.ReceiveAsync();
             
             ResponseData<AuthServerResponse>? authResponse 
@@ -47,8 +49,13 @@ namespace Kerberos_lab_2_.Servers
             //    Удачный ответ на аутентификацию   //
             //////////////////////////////////////////
             byte[] tgtByKDCkey = authResponse.Data!.TGSEncryptByKDCKey;
-            TicketGrantingTicket tgt = JsonSerializer.Deserialize<TicketGrantingTicket>(Encoding.UTF8.GetString(authResponse.Data.TGSEncryptByClientKey))!;
+            TicketGrantingTicket tgt = JsonSerializer.Deserialize<TicketGrantingTicket>(authResponse.Data.TGSEncryptByClientKey.GetJsonString(_key))!;
             string sessionKey = tgt.SessionKey;
+
+            await Console.Out.WriteLineAsync("\n===================================\n" +
+                "Клиент получил ответ от сервера аутентификации." +
+                "\nTGT билет, зашифрованный ключем KDC: " + tgtByKDCkey.GetJsonString() +
+                "\nСессионный ключ: " + sessionKey);
 
             //////////////////////////////////////////////////////////////////
             //  Отправляем запрос на получение разрешения доступа к сервису //
@@ -56,15 +63,18 @@ namespace Kerberos_lab_2_.Servers
             Authenticator authenticator = new(_login);
 
             //Шифруем аутентификатор сессионным ключем
-            byte[] encryptAuth = JsonSerializer.Serialize(authenticator).GetBytes();
+            byte[] encryptAuth = JsonSerializer.Serialize(authenticator).GetDesEncryptBytes(sessionKey);
 
+            await Console.Out.WriteLineAsync("\n===================================\n" +
+                "Клиент отправляет запрос на разрешение доступа к сервису (TGS)." +
+                "\nЗашифрованный аутентификатор: " + encryptAuth.GetJsonString() +
+                "\nПринципал сервиса: service 1");
             TGServerRequest tgsRequest = new("service 1", tgtByKDCkey, encryptAuth);
             await udpClient.SendAsync(new ResponseData<TGServerRequest>() { Data = tgsRequest, IsSuccess = true }.GetBytes(), Configuration.TGServerEP);
             
             response = await udpClient.ReceiveAsync();
-            
             ResponseData<TGServerResponse>? tgsResponse
-                = JsonSerializer.Deserialize<ResponseData<TGServerResponse>>(Encoding.UTF8.GetString(response.Buffer));
+                = JsonSerializer.Deserialize<ResponseData<TGServerResponse>>(response.Buffer.GetJsonString());
 
             if (tgsResponse is null)
             {
@@ -82,21 +92,29 @@ namespace Kerberos_lab_2_.Servers
             //////////////////////////////////////////
             //          Удачный ответ от TGS        //
             //////////////////////////////////////////
-            ServiceTicket st = JsonSerializer.Deserialize<ServiceTicket>(tgsResponse.Data!.STEncryptBySessionKey.GetJsonString())!;
+            ServiceTicket st = JsonSerializer.Deserialize<ServiceTicket>(tgsResponse.Data!.STEncryptBySessionKey.GetJsonString(sessionKey))!;
             string sessinServiceKey = st.ServiceSessionKey;
             byte[] encryptST = tgsResponse.Data!.STEncryptByServiceKey;
 
+            await Console.Out.WriteLineAsync("\n===================================\n" +
+                "Клиент получил ответ от TGS." +
+                "\nST билет, зашифрованный ключем сервиса: " + encryptST.GetJsonString() +
+                "\nСессионный ключ сервиса: " + sessinServiceKey);
 
             /////////////////////////////////////////////////////
             //  Отправляем запрос сервису на получение данных  //
             /////////////////////////////////////////////////////
 
             //Шифруем сессионным ключем сервиса
-            encryptAuth = JsonSerializer.Serialize(new Authenticator(_login)).GetBytes();
+            encryptAuth = JsonSerializer.Serialize(new Authenticator(_login)).GetDesEncryptBytes(sessinServiceKey);
             AppServerRequest serviceRequest = new(encryptAuth, encryptST);
 
-            await udpClient.SendAsync(new ResponseData<AppServerRequest>() { Data = serviceRequest, IsSuccess = true}.GetBytes(), Configuration.ServiceServerEP);
+            await Console.Out.WriteLineAsync("\n===================================\n" +
+                "Клиент отправляет запрос на разрешение доступа к сервису (TGS)." +
+                "\nЗашифрованный аутентификатор: " + encryptAuth.GetJsonString() +
+                "\nЗашифрованный ST: " + encryptST.GetJsonString());
 
+            await udpClient.SendAsync(new ResponseData<AppServerRequest>() { Data = serviceRequest, IsSuccess = true}.GetBytes(), Configuration.ServiceServerEP);
             response = await udpClient.ReceiveAsync();
 
             ResponseData<AppServerResponse>? appResponse = JsonSerializer.Deserialize<ResponseData<AppServerResponse>>(response.Buffer);
@@ -118,9 +136,10 @@ namespace Kerberos_lab_2_.Servers
             //////////////////////////////////////////
             //       Удачный ответ от сервиса       //
             //////////////////////////////////////////
-            string message = JsonSerializer.Deserialize<string>(appResponse.Data!.ServiceResEncryptByServiceSessionKey.GetJsonString())!;
-            await Console.Out.WriteLineAsync(message);
-
+            string message = JsonSerializer.Deserialize<string>(appResponse.Data!.ServiceResEncryptByServiceSessionKey.GetJsonString(sessinServiceKey))!;
+            await Console.Out.WriteLineAsync("\n===================================\n" +
+                "Клиент получил ответ от сервиса." +
+                "\nПолученное сообщение: " + message);
             cancelTokenSource.Cancel();
         }
     }

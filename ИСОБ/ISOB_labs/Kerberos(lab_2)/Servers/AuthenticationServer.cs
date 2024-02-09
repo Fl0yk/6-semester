@@ -10,7 +10,9 @@ namespace Kerberos_lab_2_.Servers
     //Будет выдавать TGT
     internal class AuthenticationServer
     {
-        private string _sessionKey;
+        private string _sessionKey = Configuration.SessionKey;
+        private string _clientKey = Configuration.ClientKey;
+        private string _kdcKey = Configuration.KDCKey;
         private List<string> _users = ["Miha"];
 
         /// <summary>
@@ -55,20 +57,20 @@ namespace Kerberos_lab_2_.Servers
                     continue;
                 }
 
-                //Генерируем сессионный ключ(надо)
-
+                //Генерируем сессионный ключ
+                string sessionKey = Configuration.SessionKey;
 
                 //Формируем и отправляем ответ пользователю
                 int duration = data.Duration < Configuration.BaseDuration
                                 ? data.Duration : Configuration.BaseDuration;
                 
-                TicketGrantingTicket tgt = new("sessionKey", data.UserPrincipal, duration);
+                TicketGrantingTicket tgt = new(sessionKey, data.UserPrincipal, duration);
                 //Получаем две строки зашифрованных тгт разными ключами(надо)
                 //Т.е. не просто сериализуем тгт, а еще и шифруем байты(или строку)
                 AuthServerResponse response = new(data.UserPrincipal,
-                    JsonSerializer.Serialize(tgt).GetBytes(),
-                    JsonSerializer.Serialize(tgt).GetBytes());
-                
+                    JsonSerializer.Serialize(tgt).GetDesEncryptBytes(_clientKey),
+                    JsonSerializer.Serialize(tgt).GetDesEncryptBytes(_kdcKey));
+
                 await udpClient.SendAsync(new ResponseData<AuthServerResponse>() { Data = response, IsSuccess = true }.GetBytes(), endPoint);
             }
         }
