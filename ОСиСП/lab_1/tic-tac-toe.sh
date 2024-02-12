@@ -2,17 +2,43 @@
 
 #объявляем переменную массивом (она будет глобальной)
 declare -a board=(" " " " " " " " " " " " " " " " " ")
+declare -i turn_id
 
-function block_player {
+function try_win {
     local marker="X"
+    echo win
+    # Попытка победить
+    for (( k=0; k<9; k++ ))
+    do
+        if [ "${board[$k]}" == " " ]
+        then
+            board[$k]="X" 
+            check_win "X"
+            tmp=$?
+            
+            if [[ $tmp -eq 0 ]]
+            then
+                board[$k]=$marker
+                echo "can win"
+                return
+            else
+                board[$k]=" "
+            fi
+        fi
+    done
+    return 1
+}
 
+function try_block {
+    local marker="X"
+    echo block
     # Попытка заблокировать игрока
     for (( k=0; k<9; k++ ))
     do
         if [ "${board[$k]}" == " " ]
         then
             board[$k]="O" 
-            check_win 1 "O"
+            check_win "O"
             tmp=$?
             
             if [[ $tmp -eq 0 || $tmp -eq 2 ]]
@@ -29,20 +55,20 @@ function block_player {
 
 function rand_turn {
     local marker="X"
-
+    echo rand
     if [ "${board[4]}" == " " ]
     then
         board[4]=$marker
         return
     fi
     rand_id=$RANDOM
-    let "number %= 8"
-    let "number += 1"
+    let "number %= 9"
+    #let "number += 1"
     while [ "${board[$rand_id]}" != " " ]
     do
         rand_id=$RANDOM
-        let "number %= 8"
-        let "number += 1"
+        let "number %= 9"
+        #let "number += 1"
     done
 
     board[$rand_id]=$marker
@@ -69,7 +95,7 @@ function make_screenshot {
 #Функция вывода сообщения при окончании игры
 function end_game {
     local message=$1
-    clear
+    #clear
     echo " $message"
     print_board
     make_screenshot
@@ -77,17 +103,15 @@ function end_game {
     exit
 }
 
-#В функцию передается номер игрока и его символ (X или O)
+#В функцию передается символ (X или O)
 function check_win {
-    local player=$1
-    local marker=$2
+    local marker=$1
     
     #Проверяем строки
     for((i=0; i < 3; i++ )) 
     do
         if [[ ${board[$((i*3))]} == $marker && ${board[$((i*3+1))]} == $marker && ${board[$((i*3+2))]} == $marker ]]
         then
-            #end_game "Победил игрок $player"
             return 0
         fi
     done
@@ -97,7 +121,6 @@ function check_win {
     do
         if [[ ${board[$((i))]} == $marker && ${board[$((i+3))]} == $marker && ${board[$((i+6))]} == $marker ]]
         then
-            #end_game "Победил игрок $player"
             return 0
         fi
     done
@@ -105,13 +128,11 @@ function check_win {
     #Проверяем диагонали
     if [[ ${board[$((0))]} == $marker  &&  ${board[$((4))]} == $marker  &&  ${board[$((8))]} == $marker ]]
     then
-        #end_game "Победил игрок $player"
         return 0
     fi
 
     if [[ ${board[$((2))]} == $marker && ${board[$((4))]} == $marker && ${board[$((6))]} == $marker ]]
     then
-        #end_game "Победил игрок $player"
         return 0
     fi
 
@@ -130,10 +151,9 @@ function check_win {
 }
 
 function take_turn {
-    local player=$1
-    local marker=$2
+    local marker=$1
 
-    read -p "Игрок $player, выберите ход(1-9): " position
+    read -p "Игрок, выберите ход(1-9): " position
 
     #Проверяем регуляркой, что ввели цифру
     if [[ ! $position =~ ^[1-9]$ ]] || [[ ${board[$((position-1))]} != " " ]]
@@ -142,48 +162,55 @@ function take_turn {
         take_turn $player $marker
     else
         board[$((position-1))]=$marker
-        #make_screenshot
-        #check_win $player $marker
+    fi
+}
+
+function bot_turn {
+    try_win || try_block || rand_turn
+        
+    check_win "X"
+    tmp=$?
+    if [ $tmp -eq 0 ]
+    then
+        end_game "Победил бот"
+    fi
+    if [ $tmp -eq 2 ]
+    then
+        end_game "Ничья"
+    fi
+}
+
+function player_turn {
+    take_turn "O"
+    check_win "O"
+    tmp=$?
+    if [ $tmp -eq 0 ]
+    then
+        end_game "Победил человек"
+    fi
+    if [ $tmp -eq 2 ]
+    then
+        end_game "Ничья"
     fi
 }
 
 function game {
+    turn_id=$RANDOM
+    let "turn_id %= 2"
+
     while true
     do
-        clear
+        #clear
         print_board
         make_screenshot
 
-        #Ход компьютера
-        block_player || rand_turn
-        
-        check_win 1 "X"
-        tmp=$?
-        if [ $tmp -eq 0 ]
+        if ((turn_id % 2 == 0))
         then
-            end_game "Победил бот"
+            player_turn
+        else
+            bot_turn
         fi
-        if [ $tmp -eq 2 ]
-        then
-            end_game "Ничья"
-        fi
-
-        clear
-        print_board
-        make_screenshot
-
-        #Ход игрока
-        take_turn 2 "O"
-        check_win 2 "O"
-        tmp=$?
-        if [ $tmp -eq 0 ]
-        then
-            end_game "Победил человек"
-        fi
-        if [ $tmp -eq 2 ]
-        then
-            end_game "Ничья"
-        fi
+        let "turn_id += 1"
     done
 }
 
