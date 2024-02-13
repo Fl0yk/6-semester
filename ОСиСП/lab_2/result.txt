@@ -1,7 +1,7 @@
 Name|Count|Avg price|Sum price
-"a"|5|4|20
+"a"|5|4,75|23,75
 "Prod"|11|6|66
-"Prod 1"|12|12|144
-"Prod 3"|28|6,75|175
+"Prod 1"|8|12|96
+"Prod 3"|28|6,8|180,8
 "prod. T2"|4|14|56
 "Product 5" | 14 | 8,5 | 134

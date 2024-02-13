@@ -43,7 +43,7 @@ awk 'BEGIN{
     sum_price=0;
     total_price=0;
     print "Name|Count|Avg price|Sum price";
-    }/^"[A-Za-z0-9 .]+"\|[[:digit:]]+\|[[:digit:]]+$/{
+    }/^"[A-Za-z0-9 .]+"\|[[:digit:]]+\|[[:digit:]]+(,[0-9]?[0-9]?)?$/{
         if (last_prod != "" && last_prod != $1)
         {
             avg_price = sum_price / count;
@@ -54,7 +54,6 @@ awk 'BEGIN{
             count = 0;
             last_prod = "";
         }
-
         last_prod = $1;
         total_count = total_count + $2;
         sum_price = sum_price + $3;
