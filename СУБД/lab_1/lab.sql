@@ -62,10 +62,12 @@ END;
 
 /*Задание 4*/
 /*Выводит строку для вставки в таблицу значения с конкретным id*/
-CREATE OR REPLACE FUNCTION GetInsertCommand(id INTEGER) 
-RETURN STRING IS
+CREATE OR REPLACE FUNCTION GetInsertCommand(p_id INTEGER) RETURN STRING IS
+    v_val NUMBER;
 BEGIN
-    RETURN 'INSERT INTO MyTable(id, val) VALUES ('|| id ||', '|| ROUND(DBMS_RANDOM.VALUE(1, 100000)) ||');';
+    SELECT val INTO v_val FROM MyTable WHERE id = p_id;
+
+    RETURN 'INSERT INTO MyTable(id, val) VALUES ('|| p_id ||', '|| v_val ||');';
 END;
 
 /*Для проверки*/
@@ -106,17 +108,24 @@ SELECT * FROM MyTable;
 /*Проверить переданные проценты, чтоб были целыми и от 0 до 100*/
 CREATE OR REPLACE FUNCTION RewardForYear(p_salary NUMBER, p_bonus INTEGER) RETURN NUMBER
 IS
+    salary_ex EXCEPTION;
     bonus_exception EXCEPTION;
 BEGIN
     IF p_bonus < 0 OR p_bonus > 100 THEN
         RAISE bonus_exception;
     END IF;
+    IF p_salary < 0 THEN
+        RAISE salary_ex;
+    END IF;
 
     RETURN (1 + p_bonus / 100) * 12 * p_salary;
 EXCEPTION
     WHEN bonus_exception THEN
-        dbms_output.put_line('Некорректное значение процента');
+        dbms_output.put_line('Некорректное значение процента');5
         RAISE bonus_exception;
+    WHEN salary_ex THEN
+        dbms_output.put_line('Некорректное значение зарплаты');5
+        RAISE salary_ex;
 END;
 
 /*Для проверки*/
