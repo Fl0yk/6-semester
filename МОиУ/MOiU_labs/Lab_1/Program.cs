@@ -16,9 +16,9 @@ Matrix<double> a_1 = DenseMatrix.OfArray(new double[,]{
 
 Matrix<double> x = DenseMatrix.OfArray(new double[,]
 {
-    {1},
     {0},
-    {1}
+    {0},
+    {0}
 });
 
 var res = MatrixInversion.FindInversionMatrix(a_1, x, 3);

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Text.RegularExpressions;
-
-public enum TokenType
+﻿public enum TokenType
 {
     Keyword, Identifier, Constant, StringLiteral,
     Operator, Punctuator, PotencialError, Unknown
@@ -112,7 +107,7 @@ public class Lexer
                 //Все нормально
                 else
                 {
-                    _tokens.Add(new Token(TokenType.Keyword, identifier));
+                    _tokens.Add(new Token(TokenType.Identifier, identifier));
                 }
 
                 continue;
@@ -134,6 +129,32 @@ public class Lexer
       
                 continue;
             }
+
+            //Проверяем на константную строку (т.е. если кавычка, то читаем до следующей)
+            if(currentChar == '\"')
+            {
+                _tokens.Add(new Token(TokenType.Punctuator, currentChar.ToString()));
+                _position++;
+                _tokens.Add(new Token(TokenType.StringLiteral, ReadWhile(c => c != '\"')));
+            }
+
+            if (currentChar == '\'')
+            {
+                _tokens.Add(new Token(TokenType.Punctuator, currentChar.ToString()));
+                _position++;
+                string symbol = ReadWhile(c => c != '\'');
+                //В одинарные кавычки можно только символ вставлять
+                //Длинна равна 3, если две одинарных кавычки и сам символ
+                if ( symbol.Length != 1)
+                {
+                    _tokens.Add(new Token(TokenType.Unknown, symbol));
+                }
+                else
+                {
+                    _tokens.Add(new Token(TokenType.StringLiteral, symbol));
+                }
+            }
+
 
             //Остраются только символы пунктуации
             _tokens.Add(new Token(TokenType.Punctuator, currentChar.ToString()));
@@ -225,6 +246,7 @@ public class Program
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine($"Error! ID: {token.Id}, Type: {token.Type}, Value: '{token.Value}'");
                 Console.ResetColor();
+                continue;
             }
 
             Console.WriteLine($"ID: {token.Id}, Type: {token.Type}, Value: '{token.Value}'");
