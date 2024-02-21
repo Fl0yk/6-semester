@@ -56,7 +56,7 @@ namespace Kerberos_lab_2_.Servers
                 "Клиент получил ответ от сервера аутентификации." +
                 "\nTGT билет, зашифрованный ключем KDC: " + tgtByKDCkey.GetJsonString() +
                 "\nСессионный ключ: " + sessionKey);
-
+            
             //////////////////////////////////////////////////////////////////
             //  Отправляем запрос на получение разрешения доступа к сервису //
             //////////////////////////////////////////////////////////////////
@@ -109,10 +109,10 @@ namespace Kerberos_lab_2_.Servers
             encryptAuth = JsonSerializer.Serialize(new Authenticator(_login)).GetDesEncryptBytes(sessinServiceKey);
             AppServerRequest serviceRequest = new(encryptAuth, encryptST);
 
-            await Console.Out.WriteLineAsync("\n===================================\n" +
+            Console.WriteLine("\n===================================\n" +
                 "Клиент отправляет запрос на разрешение доступа к сервису (TGS)." +
                 "\nЗашифрованный аутентификатор: " + encryptAuth.GetJsonString() +
-                "\nЗашифрованный ST: " + encryptST.GetJsonString());
+                "\n\n\nЗашифрованный ST: " + encryptST.GetJsonString());
 
             await udpClient.SendAsync(new ResponseData<AppServerRequest>() { Data = serviceRequest, IsSuccess = true}.GetBytes(), Configuration.ServiceServerEP);
             response = await udpClient.ReceiveAsync();

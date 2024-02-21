@@ -55,7 +55,7 @@ namespace Kerberos_lab_2_.Servers
 
                 ServiceTicket st = new(Configuration.ServiceSessionKey, userAuth.Principal, Configuration.BaseDuration);
 
-                byte[] stByServiceKey = JsonSerializer.Serialize(st).GetDesEncryptBytes(_key);
+                byte[] stByServiceKey = JsonSerializer.Serialize(st).GetDesEncryptBytes(Configuration.ClientKey);
                 byte[] stBySessionKey = JsonSerializer.Serialize(st).GetDesEncryptBytes(sessionKey);
 
                 TGServerResponse response = new(servicePrincipal, stBySessionKey, stByServiceKey);

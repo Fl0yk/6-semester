@@ -1,12 +1,12 @@
 
 --Task 1--
 CREATE TABLE Students(
-    id NUMBER PRIMARY KEY,
+    id NUMBER NOT NULL,
     name VARCHAR2(30) NOT NULL,
-    group_id NUMBER);
+    group_id NUMBER NOT NULL);
 
 CREATE TABLE Groups(
-    id NUMBER PRIMARY KEY,
+    id NUMBER NOT NULL,
     name VARCHAR2(40) NOT NULL,
     c_val NUMBER NOT NULL);
 
@@ -25,29 +25,6 @@ BEGIN
     END IF;
 END;
 
---Этот триггер уже будет проверять уникальность id
-CREATE OR REPLACE TRIGGER check_student_id
- BEFORE INSERT OR UPDATE ON Students
- FOR EACH ROW
-DECLARE
-    v_id_count NUMBER;
-    id_exist_ex EXCEPTION;
-BEGIN
-    IF UPDATING AND :OLD.id = :NEW.id THEN
-        RAISE NO_DATA_FOUND;
-    END IF;
-
-    SELECT COUNT(1) INTO v_id_count FROM Students WHERE id = :new.id;
-
-    IF v_id_count <> 0 THEN
-        dbms_output.put_line('This student id exists ' || :new.id);
-        RAISE id_exist_ex;
-    END IF;
-EXCEPTION
-    WHEN NO_DATA_FOUND THEN
-        null;
-END;
-
 
 CREATE SEQUENCE group_id_seq
 START WITH 1
@@ -62,60 +39,16 @@ BEGIN
     END IF;
 END;
 
-CREATE OR REPLACE TRIGGER check_group_id
- BEFORE INSERT OR UPDATE ON Groups
- FOR EACH ROW
-DECLARE
-    v_id_count NUMBER;
-    id_exist_ex EXCEPTION;
-BEGIN
-    IF UPDATING AND :OLD.id = :NEW.id THEN
-        RAISE NO_DATA_FOUND;
-    END IF;
-
-    SELECT COUNT(1) INTO v_id_count FROM Groups WHERE id = :new.id;
-    IF v_id_count <> 0 THEN
-        dbms_output.put_line('This group id exists ' || :new.id);
-        RAISE id_exist_ex;
-    END IF;
-EXCEPTION
-    WHEN NO_DATA_FOUND THEN
-        null;
-END;
-
-CREATE OR REPLACE TRIGGER check_group_name
- BEFORE INSERT OR UPDATE ON Groups
- FOR EACH ROW
-DECLARE
-    v_name_count NUMBER;
-    name_exist_ex EXCEPTION;
-BEGIN
-    IF UPDATING AND :OLD.name = :NEW.name THEN
-        RAISE NO_DATA_FOUND;
-    END IF;
-
-    SELECT COUNT(1) INTO v_name_count FROM Groups WHERE name = :new.name;
-    IF v_name_count <> 0 THEN
-        dbms_output.put_line('This group name exists ' || :new.name);
-        RAISE name_exist_ex;
-    END IF;
-EXCEPTION
-    WHEN NO_DATA_FOUND THEN
-        null;
-END;
-
-
-INSERT INTO Groups(name, c_val) VALUES ('153501', 0);
-INSERT INTO Students(name, group_id) VALUES ('Bob', 1);
-INSERT INTO Students(name, group_id) VALUES ('Bib', 1);
 
 --Task 3--
 CREATE OR REPLACE TRIGGER fk_group_delete_cascade
  AFTER DELETE ON Groups
  FOR EACH ROW
 BEGIN
+    UPDATE cascade SET is_cascade = TRUE WHERE id = 1;
     DELETE FROM Students
     WHERE group_id = :OLD.id;
+    UPDATE cascade SET is_cascade = FALSE WHERE id = 1;
 END;
 
 INSERT INTO Groups(name, c_val) VALUES ('153505', 0);
@@ -195,9 +128,15 @@ SELECT * FROM student_journal;
 EXEC roll_back_students(TO_TIMESTAMP(CURRENT_TIMESTAMP - 50));
 
 --Task 6--
+
+CREATE TABLE cascade(id NUMBER, is_cascade BOOLEAN);
+INSERT INTO cascade VALUES (1, FALSE);
+
 CREATE OR REPLACE TRIGGER c_val_trigger
  AFTER INSERT OR UPDATE OR DELETE ON Students
  FOR EACH ROW
+ DECLARE
+    v_is_cascade BOOLEAN;
 BEGIN 
     IF UPDATING THEN
         UPDATE Groups
@@ -216,6 +155,11 @@ BEGIN
     END IF;
 
     IF DELETING THEN
+        SELECT is_cascade INTO v_is_cascade FROM cascade WHERE id = 1;
+        IF v_is_cascade THEN
+            RETURN;
+        END IF;
+
         UPDATE Groups
         SET c_val = c_val - 1
         WHERE id = :OLD.group_id;
@@ -230,3 +174,33 @@ INSERT INTO Students(name, group_id) VALUES ('Vlad', 4);
 INSERT INTO Students(name, group_id) VALUES ('Dima', 4);
 
 DELETE Students WHERE name = 'Dima';
+
+--Last tests
+INSERT INTO Groups(id, name, c_val) VALUES (1, '153501', 0);
+INSERT INTO Groups(id, name, c_val) VALUES (2, '153502', 0);
+
+SELECT * FROM Groups;
+
+INSERT INTO Students(name, group_id) VALUES ('Bob', 1);
+INSERT INTO Students(name, group_id) VALUES ('Bib', 1);
+INSERT INTO Students(name, group_id) VALUES ('Vova', 2);
+INSERT INTO Students(id, name, group_id) VALUES (5, 'Miha', 2);
+
+--Проверяем изменение c_val
+SELECT * FROM Students
+LEFT JOIN Groups ON students.group_id = groups.id;
+
+--Проверяем изменения таблиц
+UPDATE Students SET name = 'Dima' WHERE id = 5;
+
+--Ошибки
+UPDATE Groups SET id = 1 WHERE id = 2;
+UPDATE Groups SET name = '153501' WHERE id = 2;
+
+--Проверяем каскадное удаление
+DELETE FROM Groups WHERE id = 2;
+
+SELECT * FROM student_journal;
+DELETE FROM student_journal;
+
+EXEC roll_back_students(TO_TIMESTAMP(CURRENT_TIMESTAMP - 50));
