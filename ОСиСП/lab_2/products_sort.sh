@@ -8,7 +8,6 @@
 #   наименование|общее кол-во|средняя цена|суммарная стоимость
 
 FILE_NAME="tmp.txt"
-PRODUCT_PATTERN='^"[A-Za-z0-9 .]+" | [[:digit:]]+ | [[:digit:]]+$'
 
 function delete_tmp {
     #Проверяем на любой тип файла

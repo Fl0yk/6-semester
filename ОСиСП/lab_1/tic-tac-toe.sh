@@ -19,7 +19,7 @@ function try_win {
             if [[ $tmp -eq 0 ]]
             then
                 board[$k]=$marker
-                echo "can win"
+                #echo "can win"
                 return
             else
                 board[$k]=" "
@@ -31,7 +31,7 @@ function try_win {
 
 function try_block {
     local marker="X"
-    echo block
+    #echo block
     # Попытка заблокировать игрока
     for (( k=0; k<9; k++ ))
     do
@@ -95,7 +95,7 @@ function make_screenshot {
 #Функция вывода сообщения при окончании игры
 function end_game {
     local message=$1
-    #clear
+    clear
     echo " $message"
     print_board
     make_screenshot
@@ -200,7 +200,7 @@ function game {
 
     while true
     do
-        #clear
+        clear
         print_board
         make_screenshot
 
