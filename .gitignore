@@ -3,6 +3,12 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
+#My file for labs
+#OSiSP
+*.txt
+Morse
+
+
 # User-specific files
 *.rsuser
 *.suo
