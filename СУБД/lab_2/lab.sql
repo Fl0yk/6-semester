@@ -116,16 +116,27 @@ BEGIN
 END;
 
 --Test tasks 4-5
-INSERT INTO Students(name, group_id) VALUES ('T1', 1);
-INSERT INTO Students(name, group_id) VALUES ('T2', 1);
-UPDATE Students SET name = 'T_n' WHERE name = 'T1';
-DELETE Students WHERE name = 'T1';
+INSERT INTO Groups(id, name, c_val) VALUES (1, '155004', 0);
+SELECT * FROM Groups;
+
+INSERT INTO Students(name, group_id) VALUES ('Vova', 1);
+INSERT INTO Students(name, group_id) VALUES ('Vlad', 1);
+INSERT INTO Students(name, group_id) VALUES ('Dima', 1);
+
+DELETE Students WHERE name = 'Dima';
+
 SELECT * FROM Students;
 
-DELETE student_journal;
-SELECT * FROM student_journal;
+EXEC roll_back_students(TO_TIMESTAMP(CURRENT_TIMESTAMP - INTERVAL '20' SECOND));
 
-EXEC roll_back_students(TO_TIMESTAMP(CURRENT_TIMESTAMP - 50));
+SELECT * FROM student_journal;
+DELETE FROM student_journal;
+
+BEGIN
+dbms_output.put_line(CURRENT_TIMESTAMP );
+dbms_output.put_line(CURRENT_TIMESTAMP - INTERVAL '30' SECOND);
+dbms_output.put_line(TO_TIMESTAMP('21.02.24 10:53:39'));
+END;
 
 --Task 6--
 
@@ -166,14 +177,28 @@ BEGIN
     END IF;
 END;
 
-INSERT INTO Groups(name, c_val) VALUES ('155004', 0);
+INSERT INTO Groups(id, name, c_val) VALUES (1, '155004', 0);
 SELECT * FROM Groups;
 
-INSERT INTO Students(name, group_id) VALUES ('Vova', 4);
-INSERT INTO Students(name, group_id) VALUES ('Vlad', 4);
-INSERT INTO Students(name, group_id) VALUES ('Dima', 4);
+INSERT INTO Students(name, group_id) VALUES ('Vova', 1);
+INSERT INTO Students(name, group_id) VALUES ('Vlad', 1);
+INSERT INTO Students(name, group_id) VALUES ('Dima', 1);
 
 DELETE Students WHERE name = 'Dima';
+
+SELECT * FROM Students;
+
+EXEC roll_back_students(TO_TIMESTAMP(CURRENT_TIMESTAMP - INTERVAL '30' SECOND));
+
+SELECT * FROM student_journal;
+DELETE FROM student_journal;
+
+BEGIN
+dbms_output.put_line(CURRENT_TIMESTAMP );
+dbms_output.put_line(CURRENT_TIMESTAMP - INTERVAL '30' SECOND);
+dbms_output.put_line(TO_TIMESTAMP('21.02.24 10:53:39'));
+END;
+
 
 --Last tests
 INSERT INTO Groups(id, name, c_val) VALUES (1, '153501', 0);
