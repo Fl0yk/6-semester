@@ -1,4 +1,5 @@
 #include "functions.h"
+#include <iostream>
 
 std::map<std::string, char> morseCodeToChar = {
     {".-", 'A'}, {"-...", 'B'}, {"-.-.", 'C'}, {"-..", 'D'}, {".", 'E'},
@@ -43,6 +44,6 @@ std::string decode(std::string code)
 
         result += morseCodeToChar[curSymbol];
     }
-
+    
     return result;
 }
