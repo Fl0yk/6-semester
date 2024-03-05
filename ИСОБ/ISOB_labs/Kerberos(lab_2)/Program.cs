@@ -9,7 +9,7 @@ AuthenticationServer authenticationServer = new();
 ClientServer clientServer = new();
 TicketGrantingServer ticketGrantingServer = new();
 ServiceServer serviceServer = new();
-
+Thread.Sleep(1000);
 try
 {
     Task.WaitAll([authenticationServer.Listen(token), 
