@@ -1,32 +1,35 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
+﻿using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace TCP_Hacker_lab_3_
 {
     internal class Server
     {
-        private static readonly IPEndPoint _ip = new(IPAddress.Parse("127.0.0.1"), 1000);
+        private static int _port = 1000;
+
+        private static readonly IPEndPoint _ip = new(IPAddress.Parse("127.0.0.1"), _port);
 
         public static IPEndPoint ServerIP { get => _ip; }
+
+        //Нужно для того, чтобы раазорвать соединение с конкретным клиентом
+        //т.к. шарпы не позволят подключиться к серверу с аналогичными данными
+        //ключ - порт
+        private readonly Dictionary<int, Socket> _clients = [];
 
         public async Task Listen(CancellationToken token)
         {
             // Создаем объект Socket для прослушивания указанного IP адреса и порта
             Socket listenerSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            //Время ожиданий ответа равно 5 секундам
-            //listenerSocket.ReceiveTimeout = 5000;
+            //Время ожиданий ответа равно 1 секунду
+            listenerSocket.ReceiveTimeout = 1000;
 
             try
             {
                 // Привязываем сокет к конечной точке
                 listenerSocket.Bind(_ip);
                 // Начинаем прослушивание с максимальной длиной очереди подключений в 10
-                listenerSocket.Listen(1);
+                listenerSocket.Listen(10);
                 Console.WriteLine($"Сервер запущен на {_ip}");
 
                 // Бесконечный цикл для прослушивания новых подключений
@@ -34,10 +37,13 @@ namespace TCP_Hacker_lab_3_
                 {
                     // Принимаем новое подключение
                     Socket clientSocket = await listenerSocket.AcceptAsync(token);
+                    Console.WriteLine($"Подключается клиент: {clientSocket.RemoteEndPoint}");
 
-                    // Создаем новый поток для обработки клиента
+                    //Добавляем клентов в словарь и для каждого запускаем свой обработчик
+                    _clients.Add((clientSocket.RemoteEndPoint as IPEndPoint).Port, clientSocket);
+
                     Thread clientThread = new Thread(new ParameterizedThreadStart(HandleClient));
-                    clientThread.Start(clientSocket);
+                    clientThread.Start((clientSocket.RemoteEndPoint as IPEndPoint).Port);
                 }
             }
             catch (OperationCanceledException)
@@ -48,60 +54,113 @@ namespace TCP_Hacker_lab_3_
             }
         }
 
-        private async void HandleClient(object obj)
+        private void HandleClient(object obj)
         {
-            // Получаем объект Socket из параметра
-            Socket clientSocket = (Socket)obj;
-            //var port = (clientSocket.LocalEndPoint as IPEndPoint)!.Port;
-
+            int port = (int)obj;
             try
             {
-                // Преобразуем данные в строку
-                string message = ReadBlock(clientSocket).GetString();
-                Console.WriteLine($"Получено сообщение от клиента: {message}");
+                //Переменные, которые нам необходим для работы с клиентом
+                uint ackNum, seqNum = 0;
+                ushort winSize;
 
-                await Task.Delay(10000);
-                // Отправляем ответ клиенту
-                string responseMessage = "Сообщение получено успешно!";
-                byte[] responseBuffer = responseMessage.GetBytes();
-                clientSocket.Send(responseBuffer);
+                ///////////////////////////////////////////////////////
+                ///                 Подключение клиента             ///
+                ///     Клиент --SYN;SEQ=0--> Сервер                ///
+                ///     Сервер --SYN+ACK;SEQ=0;ACK=1--> Клиент      ///
+                ///     Клиент --ACK;WinSize;SEQ=1;ACK=1--> Сервер  ///
+                ///     (последнее - подтверждение подключения +    ///
+                ///      сам запрос на сообщение от сервера)        ///
+                ///////////////////////////////////////////////////////
+
+                TCPPacket packet = ReadPacket(port);
+
+                if (!packet.SYN || packet.Data.Length != 0)
+                    throw new Exception($"Некорректный первый пакет подключения от клиента {port}\n" + packet.ToString());
+
+                ackNum = packet.SequenceNumber + 1;
+                winSize = packet.WindowSize;
+
+                SendPacket(port, TCPPacket.GetEmptyPacket(winSize, _port, port, seqNum, ackNum, syn: true, ack: true));
+
+                packet = ReadPacket(port);
+
+                if (!packet.ACK || packet.Data.Length != 0)
+                    throw new Exception("Некорректный второй пакет подключения от клиента");
+
+                Console.WriteLine("\nКлиент успешно подключися. Начиентся отправление сообщения\n");
+
+                ///////////////////////////////////////////////////////
+                ///                 Получение сообщения             ///
+                ///     Сервер --SEQ=1;ACK=1;data(4 б)--> Клиент    ///
+                ///     Клиент --ACK;SEQ=1;ACK=5--> Сервер          ///
+                ///     Сервер --SEQ=5;ACK=1;data(4 б)--> Клиент    ///
+                ///     ........................................    ///
+                ///     Сервер --FIN; SEQ=n;ACK=1--> Клиент         ///
+                ///     (последнее - подтверждение, что отправили + ///
+                ///      завершение соединения)                     ///
+                ///////////////////////////////////////////////////////
+
+                StringBuilder str = new();
+
+                for (int i = 0; i < 100; i++)
+                    str.Append(i + ", ");
+
+                List<TCPPacket> packets = TCPPacket.GetPackets(str.ToString().GetBytes(), winSize, _port, port, seqNum, ackNum).ToList();
+
+                foreach (var pack in packets)
+                {
+                    //Thread.Sleep(10);
+                    SendPacket(port, pack);
+
+                    packet = ReadPacket(port);
+
+                    if (!packet.ACK || packet.Data.Length != 0)
+                        throw new Exception("Некорректный пакет подтверждения получения пакета от клиента");
+
+                    if (packet.RST)
+                    {
+                        Console.WriteLine("Экстренное завершение соединения с клиентом " + packet.SourcePort);
+                        _clients[packet.SourcePort].Close();
+                        return;
+                    }
+
+                    if (pack.SequenceNumber + winSize != packet.AcknowledgmentNumber)
+                        throw new Exception("Клиент подьвердил получение не тех данных");
+                }
+
+                SendPacket(port, TCPPacket.GetEmptyPacket(winSize, _port, port, seqNum, ackNum, fin: true));
+
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Ошибка обработки клиента: {ex.Message}");
-                Console.WriteLine(ex.GetType());
+                Console.WriteLine($"Ошибка обработки клиента {port}: {ex.Message}");
+                //throw;
             }
             finally
             {
                 // Закрываем сокет при завершении работы с клиентом
-                clientSocket.Close();
+                if(_clients[port].Connected)
+                    _clients[port].Close();
             }
         }
 
-
-        private bool ClientIsConnected(out int windowSize)
+        private void SendPacket(int port, TCPPacket packet)
         {
-
-
-            windowSize = -1;
-            return false;
+            byte[] responseBuffer = packet.GetBytes();
+            _clients[port].Send(responseBuffer);
         }
 
-        private byte[] ReadBlock(Socket socket)
+        public TCPPacket ReadPacket(int port)
         {
             // Буфер для хранения данных
             byte[] messageBuffer = new byte[4096];
             List<byte> res = new();
-            int bytesRead;
 
             // Читаем данные из клиента
-            while (socket.Available > 0)
-            {
-                bytesRead = socket.Receive(messageBuffer);
-                res.AddRange(messageBuffer[0..bytesRead]);
-            }
+            int bytesRead = _clients[port].Receive(messageBuffer);
+            res.AddRange(messageBuffer[0..bytesRead]);
 
-            return res.ToArray();
+            return res.ToArray().GetTcpPacket();
         }
     }
 }
