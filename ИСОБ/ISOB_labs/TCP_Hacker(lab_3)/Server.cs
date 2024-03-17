@@ -35,6 +35,8 @@ namespace TCP_Hacker_lab_3_
                 // Бесконечный цикл для прослушивания новых подключений
                 while (true)
                 {
+                    if (token.IsCancellationRequested)
+                        break;
                     // Принимаем новое подключение
                     Socket clientSocket = await listenerSocket.AcceptAsync(token);
                     Console.WriteLine($"Подключается клиент: {clientSocket.RemoteEndPoint}");
@@ -74,6 +76,8 @@ namespace TCP_Hacker_lab_3_
 
                 TCPPacket packet = ReadPacket(port);
 
+                //Console.WriteLine($"\nСервер получил пакет на запрос для подключения: { packet}\n");
+
                 if (!packet.SYN || packet.Data.Length != 0)
                     throw new Exception($"Некорректный первый пакет подключения от клиента {port}\n" + packet.ToString());
 
@@ -81,8 +85,10 @@ namespace TCP_Hacker_lab_3_
                 winSize = packet.WindowSize;
 
                 SendPacket(port, TCPPacket.GetEmptyPacket(winSize, _port, port, seqNum, ackNum, syn: true, ack: true));
+                //Console.WriteLine($"Сервер отправил пакет в качестве подтвержения подключения: {TCPPacket.GetEmptyPacket(winSize, _port, port, seqNum, ackNum, syn: true, ack: true)}\n");
 
                 packet = ReadPacket(port);
+                //Console.WriteLine($"Сервер получил пакет, подтверждающий подключение: {packet}\n");
 
                 if (!packet.ACK || packet.Data.Length != 0)
                     throw new Exception("Некорректный второй пакет подключения от клиента");
@@ -102,15 +108,16 @@ namespace TCP_Hacker_lab_3_
 
                 StringBuilder str = new();
 
-                for (int i = 0; i < 100; i++)
+                for (int i = 0; i < 10; i++)
                     str.Append(i + ", ");
 
                 List<TCPPacket> packets = TCPPacket.GetPackets(str.ToString().GetBytes(), winSize, _port, port, seqNum, ackNum).ToList();
 
                 foreach (var pack in packets)
                 {
-                    //Thread.Sleep(10);
+                    Thread.Sleep(10);
                     SendPacket(port, pack);
+                    //Console.WriteLine($"Сервер отправил клиенту данный пакет: {pack}\n");
 
                     packet = ReadPacket(port);
 
@@ -119,13 +126,13 @@ namespace TCP_Hacker_lab_3_
 
                     if (packet.RST)
                     {
-                        Console.WriteLine("Экстренное завершение соединения с клиентом " + packet.SourcePort);
+                        Console.WriteLine("Экстренное завершение соединения с клиентом " + packet.SourcePort + $"\nБыл получен пакет: {packet}");
                         _clients[packet.SourcePort].Close();
                         return;
                     }
 
                     if (pack.SequenceNumber + winSize != packet.AcknowledgmentNumber)
-                        throw new Exception("Клиент подьвердил получение не тех данных");
+                        throw new Exception("Клиент подтвердил получение не тех данных");
                 }
 
                 SendPacket(port, TCPPacket.GetEmptyPacket(winSize, _port, port, seqNum, ackNum, fin: true));

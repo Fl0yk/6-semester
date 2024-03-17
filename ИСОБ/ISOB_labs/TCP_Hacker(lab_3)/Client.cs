@@ -41,7 +41,7 @@ namespace TCP_Hacker_lab_3_
                 {
                     serverMessage.Append(packet.Data.GetString());
 
-                    Thread.Sleep(10);
+                    Thread.Sleep(200);
                     SendPacket(clientSocket, TCPPacket.GetEmptyPacket(4, Constans.ClientPort, serverIP.Port, 1, packet.SequenceNumber + (uint)packet.Data.Length, ack: true));
                     packet = ReadPacket(clientSocket);
                 }
