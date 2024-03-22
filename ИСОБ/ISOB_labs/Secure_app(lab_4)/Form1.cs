@@ -10,7 +10,7 @@ namespace Secure_app_lab_4_
         {
             Admin,
             Vip,
-            Peasant
+            Client
         }
 
         private class DefenseSystemSwitcher
@@ -74,7 +74,7 @@ namespace Secure_app_lab_4_
             usersData[2].Role = Roles.Vip;
             usersData[3].Role = Roles.Vip;
             usersData[4].Role = Roles.Vip;
-            usersData[5].Role = Roles.Peasant;
+            usersData[5].Role = Roles.Client;
         }
 
         private int GetIndex(Button sender) => Convert.ToInt32((sender).Name.Last().ToString()) - 1;
@@ -177,7 +177,7 @@ namespace Secure_app_lab_4_
                 }
             }
 
-            if (defense.PrivilegeMinimization && userByIndex.Role == Roles.Peasant)
+            if (defense.PrivilegeMinimization && userByIndex.Role == Roles.Client)
             {
                 MessageBox.Show("Недостаточно привилегий!", "Ошибка доступа");
                 return;
