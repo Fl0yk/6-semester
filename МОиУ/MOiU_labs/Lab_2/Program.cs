@@ -1,23 +1,29 @@
 ﻿using Lab_2;
 using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.LinearAlgebra.Double;
-using System.Runtime.ConstrainedExecution;
 
 Matrix<double> a = DenseMatrix.OfArray(new double[,]{
-    {-1, 1, 1, 0, 0},
-    {1, 0, 0, 1, 0},
-    {0, 1, 0, 0, 1 }
+    {1, 1, 1},
+    {2, 2, 2}
 });
 
-Matrix<double> c = DenseVector.OfArray([1, 1, 0, 0, 0]).ToRowMatrix();
+Vector<double> c = DenseVector.OfArray([1, 0, 0]);
 
-Matrix<double> x = DenseVector.OfArray([0, 0, 1, 3, 2]).ToColumnMatrix();
+List<double> b = [0, 0];
 
-List<int> b = [3, 4, 5];
+try
+{
+    var res = SimplexMethod.InitialPhase(a, c, b);
 
-var res = SimplexMethod.MainPhase(a, c, x, b);
-
-Console.ForegroundColor = ConsoleColor.Green;
-Console.WriteLine("\nРезультаты!\n");
-Console.WriteLine(res);
-Console.ResetColor();
+    Console.ForegroundColor = ConsoleColor.Green;
+    Console.WriteLine("\nРезультаты!\n");
+    Console.WriteLine(res.x);
+    Console.WriteLine(string.Join(' ', res.B));
+    Console.ResetColor();
+}
+catch (Exception ex)
+{
+    Console.ForegroundColor = ConsoleColor.Green;
+    Console.WriteLine($"\nОшибка: {ex.Message}\n");
+    Console.ResetColor();
+}

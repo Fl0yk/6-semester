@@ -1,5 +1,4 @@
 TARGET = Morse
-CC = g++
 
 PREF_SRC = ./src/
 PREF_OBJ = ./obj/
@@ -13,10 +12,10 @@ TST_RES = tst_res_
 TST_TEXT = tst_text_
 
 $(TARGET) : $(OBJ)
-	$(CC) $(OBJ) -o $(TARGET)
+	$(CXX) $(OBJ) -o $(TARGET)
 
 $(PREF_OBJ)%.o : $(PREF_SRC)%.cpp
-	$(CC) -c $< -o $@
+	$(CXX) -c $< -o $@
 
 clean :
 	rm $(TARGET) $(PREF_OBJ)*.o
