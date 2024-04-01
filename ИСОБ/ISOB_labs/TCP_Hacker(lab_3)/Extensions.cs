@@ -38,15 +38,7 @@ namespace TCP_Hacker_lab_3_
 
         public static TCPPacket GetTcpPacket(this byte[] data)
         {
-            try
-            {
-                return JsonSerializer.Deserialize<TCPPacket>(data.GetString())!;
-            }
-            catch
-            {
-                var a = data.GetString();
-                throw;
-            }
+            return JsonSerializer.Deserialize<TCPPacket>(data.GetString())!;
         }
     }
 }

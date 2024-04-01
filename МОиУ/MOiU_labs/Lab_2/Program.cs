@@ -9,8 +9,7 @@ Matrix<double> a = DenseMatrix.OfArray(new double[,]{
 
 Vector<double> c = DenseVector.OfArray([1, 0, 0]);
 
-List<double> b = [0, 0];
-
+List<double> b = [-1, 0];
 try
 {
     var res = SimplexMethod.InitialPhase(a, c, b);
