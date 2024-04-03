@@ -1,7 +1,3 @@
--- создаем схемы
-CREATE USER C##dev_schema IDENTIFIED BY dev;
-CREATE USER C##prod_schema IDENTIFIED BY prod;
-
 -- Выдаем все привилегии системе для таблиц и процедур схем
 GRANT EXECUTE ANY PROCEDURE TO SYSTEM;
 GRANT EXECUTE ANY PROCEDURE ON SCHEMA C##DEV_SCHEMA TO SYSTEM;
@@ -17,88 +13,6 @@ GRANT EXECUTE_CATALOG_ROLE TO SYSTEM;
 GRANT SELECT_CATALOG_ROLE TO FUNCTION create_object;
 GRANT SELECT_CATALOG_ROLE TO FUNCTION update_object;
 
--- Инициализируем dev схему
-CREATE TABLE C##dev_schema.common_table (
-    id INT PRIMARY KEY,
-    name VARCHAR(50)
-);
-
-CREATE TABLE C##dev_schema.foreign_table (
-    id INT PRIMARY KEY,
-    common_id INT,
-    FOREIGN KEY (common_id) REFERENCES C##dev_schema.common_table(id)
-);
-
-CREATE TABLE C##dev_schema.diff_table (
-    id INT PRIMARY KEY,
-    name VARCHAR(50),
-    description VARCHAR(100)
-);
-
-CREATE TABLE C##dev_schema.new_table (
-    id INT PRIMARY KEY,
-    name VARCHAR(200)
-);
-
-CREATE OR REPLACE PROCEDURE C##dev_schema.my_procedure AS
-BEGIN
-  NULL;
-END;
-/
-
-
-CREATE OR REPLACE FUNCTION C##dev_schema.my_function
-RETURN NUMBER AS
-BEGIN
-  RETURN 1;
-END;
-/
-
-
--- инициализируем prod схему
-CREATE TABLE C##prod_schema.common_table (
-    id INT PRIMARY KEY,
-    name VARCHAR(50)
-);
-
-CREATE TABLE C##prod_schema.foreign_table (
-    id INT PRIMARY KEY,
-    common_id INT,
-    FOREIGN KEY (common_id) REFERENCES C##prod_schema.common_table(id)
-);
-
-CREATE TABLE C##prod_schema.diff_table (
-    id INT PRIMARY KEY,
-    name VARCHAR(50)
-);
-
-CREATE TABLE C##prod_schema.circle1 (
-    id INT PRIMARY KEY,
-    circle2_id INT
-);
-
-CREATE TABLE C##prod_schema.circle2 (
-    id INT PRIMARY KEY,
-    circle1_id INT,
-    FOREIGN KEY (circle1_id) REFERENCES C##prod_schema.circle1(id)
-);
-
-ALTER TABLE C##prod_schema.circle1
-ADD CONSTRAINT fk_circle2_id
-FOREIGN KEY (circle2_id) REFERENCES C##prod_schema.circle2(id);
-
-CREATE OR REPLACE PROCEDURE C##prod_schema.my_procedure AS
-BEGIN
-  NULL;
-END;
-/
-
-CREATE OR REPLACE FUNCTION C##prod_schema.my_function
-RETURN NUMBER AS
-BEGIN
-  RETURN 2;
-END;
-/
 
 CREATE TABLE comparison_result(
     table_name VARCHAR2(100),
@@ -116,7 +30,10 @@ CREATE TABLE sorted_tables (
 CREATE OR REPLACE PROCEDURE sort_tables_in_schema(schema_name IN VARCHAR2) 
 AS
 BEGIN
+    -- Проходимся циклом по всем таблицам, начиная с тех, у которых нет зависимостей
     FOR rec IN (
+        -- Делаем рекурсивный запрос. Т.е. начинаем с таблиц без внешних ключей, а затем
+        -- рекурсивное соединяет с другими таблицами через внешние ключи
         WITH DEPENDENCYTREE(table_name, lvl) AS (
             SELECT table_name, 1 AS lvl
             FROM all_tables
@@ -136,13 +53,62 @@ BEGIN
         )
         SELECT table_name
         FROM DEPENDENCYTREE
+        -- Сортируем по уровню вложенности
         ORDER BY lvl
     ) LOOP
+        -- Вставляем имена всех таблиц
         BEGIN
             INSERT INTO sorted_tables (table_name) VALUES (rec.table_name);
         END;
     END LOOP;
 END sort_tables_in_schema;
+/
+
+CREATE TABLE schema_dependencies(
+    child_obj VARCHAR2(100), 
+    parent_obj VARCHAR2(100)
+);
+
+-- Поиск циклических зависимостей
+CREATE OR REPLACE PROCEDURE check_cyclic_dependencies(schema_name in VARCHAR2) 
+AS
+    result VARCHAR2(100);
+BEGIN
+    -- Перебираем все таблицы схемы          
+    FOR schema_table IN (SELECT schema_tables.table_name name FROM all_tables schema_tables WHERE owner = schema_name) 
+    LOOP
+        -- Вставляем в таблицу уникальные пары родитель - ребенок по внешним ключам
+        INSERT INTO schema_dependencies (child_obj, parent_obj)
+            SELECT DISTINCT a.table_name, c_pk.table_name r_table_name FROM all_cons_columns a
+            JOIN all_constraints c ON a.owner = c.owner AND a.constraint_name = c.constraint_name
+            JOIN all_constraints c_pk ON c.r_owner = c_pk.owner AND c.r_constraint_name = c_pk.constraint_name
+        WHERE c.constraint_type = 'R' AND a.table_name = schema_table.name;
+    END LOOP;
+
+    WITH Paths AS (
+        SELECT child_obj, parent_obj, SYS_CONNECT_BY_PATH(child_obj, ',') AS path
+        FROM schema_dependencies
+        START WITH child_obj IN (SELECT DISTINCT child_obj FROM schema_dependencies)
+        CONNECT BY NOCYCLE PRIOR parent_obj = child_obj
+        AND LEVEL > 1
+    )
+    SELECT CASE 
+             WHEN EXISTS (
+               SELECT 1 
+               FROM Paths 
+               WHERE REGEXP_COUNT(path, ',') > 1
+             ) THEN 'В схеме есть циклические зависимости' 
+             ELSE 'В схеме нету циклических зависимостей' 
+           END
+    INTO result
+    FROM dual;
+    
+    DBMS_OUTPUT.PUT_LINE(result);
+    
+    EXECUTE IMMEDIATE 'DELETE FROM schema_dependencies';
+  
+END check_cyclic_dependencies;
+/
 
 -- сравнивает схемы. Т.е. либо один из флагов, либо ничего
 CREATE OR REPLACE PROCEDURE compare_schemas(dev_schema in VARCHAR2, prod_schema in VARCHAR2, ddl_output in VARCHAR2) 
@@ -150,12 +116,14 @@ AS
     diff NUMBER := 0;
     query_string VARCHAR2(4000) := '';
     temp_string VARCHAR2(4000) := '';
-BEGIN      
+BEGIN     
+    -- Проходимя по таблицам, которые есть в двух схемах
     FOR same_table IN 
         (SELECT table_name FROM all_tables dev_tables WHERE OWNER = dev_schema
         INTERSECT
         SELECT prod_tables.table_name FROM all_tables prod_tables WHERE OWNER = prod_schema) 
     LOOP
+        -- Сравниваем структуру столбцов общих схем и записываем разницу в переменную
         SELECT COUNT(*) INTO diff FROM
         (SELECT dev_table.COLUMN_NAME name, dev_table.DATA_TYPE FROM all_tab_columns dev_table 
         WHERE OWNER=dev_schema AND TABLE_NAME = same_table.table_name) dev_columns
@@ -165,6 +133,7 @@ BEGIN
         ON dev_columns.name = prod_columns.name
         WHERE dev_columns.name IS NULL OR prod_columns.name IS NULL;
 
+        -- Если есть различия, то заносим в таблиц с соответсвущим флагом
         IF diff > 0 THEN
             INSERT INTO comparison_result (table_name, is_different) VALUES (same_table.table_name, 1);
         ELSE
@@ -172,6 +141,7 @@ BEGIN
         END IF;
     END LOOP;
 
+    -- Проходимся по таблицам, которые только в дев
     FOR other_table IN 
         (SELECT dev_tables.table_name name FROM all_tables dev_tables WHERE dev_tables.OWNER = dev_schema
         MINUS 
@@ -179,6 +149,8 @@ BEGIN
     LOOP
         INSERT INTO comparison_result (table_name, is_only_in_dev_schema) VALUES (other_table.name, 1);
     END LOOP;
+
+    -- Проходимся по таблицам, которые тольок в прод
     FOR other_table IN 
         (SELECT prod_tables.table_name name FROM all_tables prod_tables WHERE prod_tables.OWNER = prod_schema
         MINUS
@@ -252,48 +224,6 @@ BEGIN
     END IF;
 END compare_schemas;
 /
-
-CREATE TABLE schema_dependencies(
-    child_obj VARCHAR2(100), 
-    parent_obj VARCHAR2(100)
-);
-
-CREATE OR REPLACE PROCEDURE check_cyclic_dependencies(schema_name in VARCHAR2) 
-AS
-    result VARCHAR2(100);
-BEGIN          
-    FOR schema_table IN (SELECT schema_tables.table_name name FROM all_tables schema_tables WHERE owner = schema_name) 
-    LOOP
-        INSERT INTO schema_dependencies (child_obj, parent_obj)
-            SELECT DISTINCT a.table_name, c_pk.table_name r_table_name FROM all_cons_columns a
-            JOIN all_constraints c ON a.owner = c.owner AND a.constraint_name = c.constraint_name
-            JOIN all_constraints c_pk ON c.r_owner = c_pk.owner AND c.r_constraint_name = c_pk.constraint_name
-        WHERE c.constraint_type = 'R' AND a.table_name = schema_table.name;
-    END LOOP;
-
-    WITH Paths AS (
-        SELECT child_obj, parent_obj, SYS_CONNECT_BY_PATH(child_obj, ',') AS path
-        FROM schema_dependencies
-        START WITH child_obj IN (SELECT DISTINCT child_obj FROM schema_dependencies)
-        CONNECT BY NOCYCLE PRIOR parent_obj = child_obj
-        AND LEVEL > 1
-    )
-    SELECT CASE 
-             WHEN EXISTS (
-               SELECT 1 
-               FROM Paths 
-               WHERE REGEXP_COUNT(path, ',') > 1
-             ) THEN 'В схеме есть циклические зависимости' 
-             ELSE 'В схеме нету циклических зависимостей' 
-           END
-    INTO result
-    FROM dual;
-    
-    DBMS_OUTPUT.PUT_LINE(result);
-    
-    EXECUTE IMMEDIATE 'DELETE FROM schema_dependencies';
-  
-END check_cyclic_dependencies;
 
 -- сравниваем объекты схем
 CREATE OR REPLACE PROCEDURE compare_schemas_objects(
@@ -375,6 +305,7 @@ BEGIN
         END LOOP;
     END LOOP;
 END compare_schemas_objects;
+ /
 
 -- создает строку для создания объекта
 CREATE OR REPLACE FUNCTION create_object (object_type IN VARCHAR2, object_name IN VARCHAR2, main_schema IN VARCHAR2, aux_schema IN VARCHAR2) 
@@ -420,6 +351,7 @@ BEGIN
     
     RETURN result;
 END update_object;
+/
 
 -- создаем строку для удаления
 CREATE OR REPLACE FUNCTION delete_object (object_type IN VARCHAR2, object_name IN VARCHAR2, main_schema IN VARCHAR2) 
@@ -427,6 +359,7 @@ RETURN VARCHAR2 IS
 BEGIN
     RETURN 'DROP ' || main_schema || '.' || object_type || ' ' || object_name || ';';
 END delete_object;
+/
 
 
 BEGIN
