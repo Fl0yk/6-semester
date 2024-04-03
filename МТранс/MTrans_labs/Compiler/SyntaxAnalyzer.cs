@@ -42,8 +42,11 @@ namespace Compiler
 
         private abstract class Grammar
         {
+            // Разраюирает последовательность токенов, начиная с индекса i
+            // Возвращает результирующий узел синт. дерева или null
             public abstract Node? Parse(List<Token> tokens, ref int i);
 
+            // Метод для объеденения несколких правил аналогично логическому или
             public Grammar Or(Grammar right)
             {
                 if (this is null)
@@ -69,6 +72,8 @@ namespace Compiler
                 }
             }
 
+            // Позволяет последовательно применить два правилаа грамматики
+            // Count - сколько раз нужно применить второре правило
             public GrammarRow Then(Grammar other, int count = 1)
             {
                 ArgumentOutOfRangeException
@@ -77,6 +82,7 @@ namespace Compiler
                 return new GrammarRow() { (this, count: 1, null), (other, count, null) };
             }
 
+            // Класс для представления последовательности правил
             public class GrammarRow
             : List<(Grammar, int count, string? errorMessage)>
             {
@@ -135,6 +141,7 @@ namespace Compiler
                 }
             }
 
+            // Метод для применения двух правил с возможностью вложенного повторения 2-го правила
             public Grammar ThenNested(Grammar other, Func<Node, Node, Node> merge, bool canEmpty = false)
             {
                 return new DelegateGrammar(ParseNested);
@@ -188,6 +195,7 @@ namespace Compiler
 
 
             #region Language grammar
+
             public static LazyGrammar ProgramGrammar => new(() =>
             {
                 return
@@ -201,8 +209,6 @@ namespace Compiler
                         separator: null,
                         canEmpty: true);
             });
-
-
 
             public static LazyGrammar StructDeclarationGrammar => new(() =>
             {
@@ -761,6 +767,7 @@ namespace Compiler
             }
         }
 
+        // Класс для создания грамматики по необходимости
         private class LazyGrammar : Grammar
         {
             private readonly Lazy<Grammar> _lazy;
@@ -777,6 +784,7 @@ namespace Compiler
             }
         }
 
+        // Класс проверяет токен на соответствие условию
         private class PredicateGrammar : Grammar
         {
             private readonly Func<Token, bool> _predicate;
@@ -796,6 +804,7 @@ namespace Compiler
             }
         }
 
+        // Для определения пустого узла
         private class EmptyGrammar : Grammar
         {
             public override Node? Parse(List<Token> tokens, ref int i)
@@ -804,6 +813,8 @@ namespace Compiler
             }
         }
 
+        // Класс описания бинарного оператора
+        // Хранит левый операнд, правый и оператор
         private class BinaryOperatorGrammar : Grammar
         {
             private readonly Grammar _grammar;
@@ -828,6 +839,7 @@ namespace Compiler
             }
         }
 
+        // Обрабатывает унарные операторы перед операндом
         private class PreUnaryOperatorGrammar : Grammar
         {
             private readonly Grammar _operandGrammar;
@@ -861,6 +873,7 @@ namespace Compiler
             }
         }
 
+        // Обрабатываает унарные операторы после операнда
         private class PostUnaryOperatorGrammar : Grammar
         {
             private readonly Grammar _operandGrammar;
@@ -893,22 +906,21 @@ namespace Compiler
             }
         }
 
+        // Проверяет, соответствует ли следующий токен лпределенному типу токена и значению
         private class TokenGrammar : PredicateGrammar
         {
             public TokenGrammar(TokenType tokenType, string? token = null)
                 : base(t => t.TokenType == tokenType && (token is null || t.Value == token))
             { }
 
-            public static Grammar Any(params (TokenType tokenType, string token)[] tokens)
-            {
-                return tokens[1..].Aggregate(new TokenGrammar(tokens[0].tokenType, tokens[0].token) as Grammar, (sum, arg) => sum.Or(new TokenGrammar(arg.tokenType, arg.token)));
-            }
+            // Для создания грамматики, которая может совпаадать с несколькими вариантами токенов
             public static Grammar Any(TokenType tokenType, params string[] tokens)
             {
                 return tokens[1..].Aggregate(new TokenGrammar(tokenType, tokens[0]) as Grammar, (sum, token) => sum.Or(new TokenGrammar(tokenType, token)));
             }
         }
 
+        // Класс для обработки блока кода
         private class BlockGrammar : Grammar
         {
             private readonly string _left;
@@ -947,6 +959,7 @@ namespace Compiler
             }
         }
 
+        // Для паарсинга граммаатик с разделителем
         private class ListGrammar : Grammar
         {
             private readonly Grammar _elemGrammar;

@@ -165,7 +165,7 @@ namespace Compiler
                 => new LiteralType(isSigned, isLong, type, system);
         }
 
-        private class LiteralType : TokenType
+        public class LiteralType : TokenType
         {
             public LiteralType(bool isSigned, bool isLong, string type, int? system = null)
                 : base(CreateType(isSigned, isLong, type, system))

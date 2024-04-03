@@ -1,4 +1,5 @@
-﻿using static Compiler.Compiler;
+﻿using Compiler;
+using static Compiler.Compiler;
 
 public class Program
 {
@@ -10,7 +11,17 @@ public class Program
 
         var root = Compiler.Compiler.SyntaxAnalysis(tokens);
 
-        WriteTree(root);
+        try
+        {
+            SemanticAnalyzer.CheckSemantic(root);
+            Console.WriteLine("Все нормально");
+        }
+        catch (SemanticAnalyzer.SemanticException ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+
+        //WriteTree(root);
     }
 
     private static void WriteTree(Node? node, int i = 0)
