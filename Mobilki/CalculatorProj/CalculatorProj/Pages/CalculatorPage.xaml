@@ -50,134 +50,204 @@
            Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="8"
            HorizontalTextAlignment="End" VerticalTextAlignment="Center"
            FontSize="30"
-           Text="Строка ввода"/>
+           Text="{ Binding Display, Mode=OneWay}"/>
         <!--#endregion-->
         
         <!--#region Базовые кнопки-->
-        <Button Text="CE"
+        <Button Text="AC"
             Grid.Row="1" Grid.Column="4"
-            Clicked="OnButtonClearInputClicked"/>
+            Command="{ Binding ClearAllCommand }"/>
 
         <Button Text="C"
             Grid.Row="1" Grid.Column="5"
-            Clicked="OnButtonClearAllClicked"/>
+            Command="{ Binding ClearCurrentDigitCommand }"/>
 
         <Button Text="&lt;="
             Grid.Row="1" Grid.Column="6"
-            Clicked="OnButtonClearOneClicked"/>
+            Command="{ Binding ClearOneSymbolCommand }"/>
 
         <Button Text="/"
             Grid.Row="1" Grid.Column="7"
-            Clicked="OnButtonBinaryOpClicked"/>
+            Command="{ Binding BinaryOperationHandlerCommand }"
+            CommandParameter="/"/>
 
         <Button Text="7"
             Grid.Row="2" Grid.Column="4"
-            Clicked="OnButtonDigitClicked"/>
+            Command="{ Binding InputDigitHandlerCommand }"
+            CommandParameter="7"/>
 
         <Button Text="8"
             Grid.Row="2" Grid.Column="5"
-            Clicked="OnButtonDigitClicked"/>
+            Command="{ Binding InputDigitHandlerCommand }"
+            CommandParameter="8"/>
 
         <Button Text="9"
             Grid.Row="2" Grid.Column="6"
-            Clicked="OnButtonDigitClicked"/>
+            Command="{ Binding InputDigitHandlerCommand }"
+            CommandParameter="9"/>
 
         <Button Text="x"
             Grid.Row="2" Grid.Column="7"
-            Clicked="OnButtonBinaryOpClicked"/>
+            Command="{ Binding BinaryOperationHandlerCommand }"
+            CommandParameter="*"/>
 
         <Button Text="4"
             Grid.Row="3" Grid.Column="4"
-            Clicked="OnButtonDigitClicked"/>
+            Command="{ Binding InputDigitHandlerCommand }"
+            CommandParameter="4"/>
 
         <Button Text="5"
             Grid.Row="3" Grid.Column="5"
-            Clicked="OnButtonDigitClicked"/>
+            Command="{ Binding InputDigitHandlerCommand }"
+            CommandParameter="5"/>
 
         <Button Text="6"
             Grid.Row="3" Grid.Column="6"
-            Clicked="OnButtonDigitClicked"/>
+            Command="{ Binding InputDigitHandlerCommand }"
+            CommandParameter="6"/>
 
         <Button Text="-"
             Grid.Row="3" Grid.Column="7"
-            Clicked="OnButtonBinaryOpClicked"/>
+            Command="{ Binding BinaryOperationHandlerCommand }"
+            CommandParameter="-"/>
 
         <Button Text="1"
             Grid.Row="4" Grid.Column="4"
-            Clicked="OnButtonDigitClicked"/>
+            Command="{ Binding InputDigitHandlerCommand }"
+            CommandParameter="1"/>
 
         <Button Text="2"
             Grid.Row="4" Grid.Column="5"
-            Clicked="OnButtonDigitClicked"/>
+            Command="{ Binding InputDigitHandlerCommand }"
+            CommandParameter="2"/>
 
         <Button Text="3"
             Grid.Row="4" Grid.Column="6"
-            Clicked="OnButtonDigitClicked"/>
+            Command="{ Binding InputDigitHandlerCommand }"
+            CommandParameter="3"/>
 
         <Button Text="+"
             FontSize="25"
             Grid.Row="4" Grid.Column="7"
-            Clicked="OnButtonBinaryOpClicked"/>
+            Command="{ Binding BinaryOperationHandlerCommand }"
+            CommandParameter="+"/>
 
         <Button Text="+/-"
             Grid.Row="5" Grid.Column="4"
-            Clicked="OnButtonChangeSignClicked"/>
+            Command="{ Binding UnaryOperatorHandlerCommand }"
+            CommandParameter="+/-"/>
 
         <Button Text="0"
             Grid.Row="5" Grid.Column="5"
-            Clicked="OnButtonDigitClicked"/>
+            Command="{ Binding InputDigitHandlerCommand }"
+            CommandParameter="0"/>
 
         <Button Text=","
             Grid.Row="5" Grid.Column="6"
-            Clicked="OnButtonAddCommaClicked"/>
+            Command="{ Binding InputCommaHandlerCommand }"/>
 
         <Button Text="="
             Grid.Row="5" Grid.Column="7"
             BackgroundColor="LightSlateGray" TextColor="White"
-            Clicked="OnButtonEqualsClicked"/>
+            Command="{ Binding EqualHandlerCommand }"/>
         <!--#endregion-->
         
         <!--#region Функционал инжинерного калькулятора-->
         <Button Text="x^2"
-            Grid.Row="1" Grid.Column="0"/>
+            Grid.Row="1" Grid.Column="0"
+            Command="{ Binding UnaryOperatorHandlerCommand }"
+            CommandParameter="x^2"/>
+        
         <Button Text="sqrt(x)"
-            Grid.Row="1" Grid.Column="1"/>
+            Grid.Row="1" Grid.Column="1"
+            Command="{ Binding UnaryOperatorHandlerCommand }"
+            CommandParameter="sqrt"/>
+        
         <Button Text="("
-            Grid.Row="1" Grid.Column="2"/>
+            Grid.Row="1" Grid.Column="2"
+            Command="{ Binding OpenBracketCommand }"/>
+        
         <Button Text=")"
-            Grid.Row="1" Grid.Column="3"/>
+            Grid.Row="1" Grid.Column="3"
+            Command="{ Binding CloseBracketCommand }"/>
+        
         <Button Text="x^3"
-            Grid.Row="2" Grid.Column="0"/>
-        <Button Text="yqrt(x)"
-            Grid.Row="2" Grid.Column="1"/>
+            Grid.Row="2" Grid.Column="0"
+            Command="{ Binding UnaryOperatorHandlerCommand }"
+            CommandParameter="x^3"/>
+
+        <Button Text="y√x"
+            Grid.Row="2" Grid.Column="1"
+            Command="{ Binding BinaryOperationHandlerCommand }"
+            CommandParameter="y√x"/>
+        
         <Button Text="log_10"
-            Grid.Row="2" Grid.Column="2"/>
+            Grid.Row="2" Grid.Column="2"
+            Command="{ Binding UnaryOperatorHandlerCommand }"
+            CommandParameter="log10"/>
+        
         <Button Text="ln"
-            Grid.Row="2" Grid.Column="3"/>
+            Grid.Row="2" Grid.Column="3"
+            Command="{ Binding UnaryOperatorHandlerCommand }"
+            CommandParameter="ln"/>
+        
         <Button Text="x^y"
-            Grid.Row="3" Grid.Column="0"/>
+            Grid.Row="3" Grid.Column="0"
+            Command="{ Binding BinaryOperationHandlerCommand }"
+            CommandParameter="x^y"/>
+        
         <Button Text="1/x"
-            Grid.Row="3" Grid.Column="1"/>
+            Grid.Row="3" Grid.Column="1"
+            Command="{ Binding UnaryOperatorHandlerCommand }"
+            CommandParameter="1/x"/>
+        
         <Button Text="10^x"
-            Grid.Row="3" Grid.Column="2"/>
+            Grid.Row="3" Grid.Column="2"
+            Command="{ Binding UnaryOperatorHandlerCommand }"
+            CommandParameter="10^x"/>
+        
         <Button Text="e^x"
-            Grid.Row="3" Grid.Column="3"/>
+            Grid.Row="3" Grid.Column="3"
+            Command="{ Binding UnaryOperatorHandlerCommand }"
+            CommandParameter="e^x"/>
+        
         <Button Text="sin"
-            Grid.Row="4" Grid.Column="0"/>
+            Grid.Row="4" Grid.Column="0"
+            Command="{ Binding UnaryOperatorHandlerCommand }"
+            CommandParameter="sin"/>
+        
         <Button Text="cos"
-            Grid.Row="4" Grid.Column="1"/>
+            Grid.Row="4" Grid.Column="1"
+            Command="{ Binding UnaryOperatorHandlerCommand }"
+            CommandParameter="cos"/>
+        
         <Button Text="tan"
-            Grid.Row="4" Grid.Column="2"/>
+            Grid.Row="4" Grid.Column="2"
+            Command="{ Binding UnaryOperatorHandlerCommand }"
+            CommandParameter="tan"/>
+        
         <Button Text="e"
-            Grid.Row="4" Grid.Column="3"/>
+            Grid.Row="4" Grid.Column="3"
+            Command="{ Binding ConstantECommand }"/>
+        
         <Button Text="sinh"
-            Grid.Row="5" Grid.Column="0"/>
+            Grid.Row="5" Grid.Column="0"
+            Command="{ Binding UnaryOperatorHandlerCommand }"
+            CommandParameter="sinh"/>
+        
         <Button Text="cosh"
-            Grid.Row="5" Grid.Column="1"/>
+            Grid.Row="5" Grid.Column="1"
+            Command="{ Binding UnaryOperatorHandlerCommand }"
+            CommandParameter="cosh"/>
+        
         <Button Text="tanh"
-            Grid.Row="5" Grid.Column="2"/>
+            Grid.Row="5" Grid.Column="2"
+            Command="{ Binding UnaryOperatorHandlerCommand }"
+            CommandParameter="tanh"/>
+        
         <Button Text="Pi"
-            Grid.Row="5" Grid.Column="3"/>
+            Grid.Row="5" Grid.Column="3"
+            Command="{ Binding ConstantPiCommand }"/>
         <!--#endregion-->
         
     </Grid>

@@ -9,22 +9,29 @@ public class Program
         var code = File.ReadAllText(filePath);
         List<Token> tokens = Compiler.Compiler.LexicalAnalysis(code).ToList();
 
-        var root = Compiler.Compiler.SyntaxAnalysis(tokens);
-
         try
         {
+            var root = Compiler.Compiler.SyntaxAnalysis(tokens);
             SemanticAnalyzer.CheckSemantic(root);
-            Console.WriteLine("Все нормально");
+            WriteTree(root, "", true);
+        }
+        catch (SyntaxException ex)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("Syntax error");
+            Console.WriteLine(ex.Message);
+            Console.ResetColor();
         }
         catch (SemanticAnalyzer.SemanticException ex)
         {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("Semantic error");
             Console.WriteLine(ex.Message);
+            Console.ResetColor();
         }
-
-        //WriteTree(root);
     }
 
-    private static void WriteTree(Node? node, int i = 0)
+    private static void WriteTree(Node node, String indent, bool last)
     {
         if (node is EmptyNode)
         {
@@ -32,19 +39,24 @@ public class Program
         }
         if (node is ValueNode tokenNode)
         {
-            Console.WriteLine(new string(' ', i * 2) + tokenNode.Token.Value);
+            Console.WriteLine(indent + "+- " + tokenNode.Token.Value);
+            indent += last ? "   " : "|  ";
         }
         else if (node is OperatorNode operatorNode)
         {
-            Console.WriteLine(new string(' ', i * 2) + operatorNode.Operator);
+            Console.WriteLine(indent + "+- " + operatorNode.Operator);
+            indent += last ? "   " : "|  ";
 
-            foreach (Node child in operatorNode.Children)
-                WriteTree(child, i + 1);
+            for (int i = 0; i < operatorNode.Children.Count(); i++)
+            {
+                WriteTree(operatorNode.Children.ToArray()[i], indent, i == operatorNode.Children.Count() - 1);
+            }
 
         }
         else if (node is TypesNode typesNode)
         {
-            Console.WriteLine(new string(' ', i * 2) + string.Join(' ', typesNode.Types.Select(t => t.Value)));
+            Console.WriteLine(indent + "+- " + string.Join(' ', typesNode.Types.Select(t => t.Value)));
+            indent += last ? "   " : "|  ";
         }
     }
 }

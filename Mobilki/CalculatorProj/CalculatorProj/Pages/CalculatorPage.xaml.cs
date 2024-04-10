@@ -1,16 +1,20 @@
-using Microsoft.Maui.Controls;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+using CalculatorProj.ViewModels;
 
 namespace CalculatorProj.Pages;
 
 public partial class CalculatorPage : ContentPage
 {
-	public CalculatorPage()
+	public CalculatorPage(CalculatorViewModel calculatorVM)
     {
 		InitializeComponent();
+
+        this.BindingContext = calculatorVM;//new CalculatorViewModel(new DoubleEngineeringCalculator());
+
+#if ANDROID
         VisualStateManager.GoToState(buttons, "Vertical");
 
         DeviceDisplay.MainDisplayInfoChanged += OnMainDisplayInfoChanged;
+#endif
     }
 
     private void OnMainDisplayInfoChanged(object sender, DisplayInfoChangedEventArgs e)
@@ -19,65 +23,5 @@ public partial class CalculatorPage : ContentPage
         VisualStateManager.GoToState(buttons, visualState);
     }
 
-    private void OnButtonDigitClicked(object sender, System.EventArgs e)
-    {
-        Button button = (Button)sender;
-        
-    }
-
-    private void OnButtonBinaryOpClicked(object sender, System.EventArgs e)
-    {
-        Button button = (Button)sender;
-        
-    }
-
-    private void OnButtonEqualsClicked(object sender, System.EventArgs e)
-    {
-        
-    }
-
-    private void OnButtonLogClicked(object sender, System.EventArgs e)
-    {
-        
-    }
-
-    private void OnButtonReverseClicked(object sender, System.EventArgs e)
-    {
-        
-    }
-
-    private void OnButtonChangeSignClicked(object sender, System.EventArgs e)
-    {
-        
-    }
-
-    private void OnButtonPow2Clicked(object sender, System.EventArgs e)
-    {
-        
-    }
-
-    private void OnButtonSqrtClicked(object sender, System.EventArgs e)
-    {
-        
-    }
-
-    private void OnButtonClearOneClicked(object sender, System.EventArgs e)
-    {
-        
-    }
-
-    private void OnButtonClearAllClicked(object sender, System.EventArgs e)
-    {
-        
-    }
-
-    private void OnButtonClearInputClicked(object sender, System.EventArgs e)
-    {
-        
-    }
-
-    private void OnButtonAddCommaClicked(object sender, System.EventArgs e)
-    {
-        
-    }
+    
 }

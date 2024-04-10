@@ -14,7 +14,7 @@ namespace Compiler
             int i = 0;
 
             var res = Grammar.ProgramGrammar.Parse(tokens, ref i);
-
+            
             if (i < tokens.Count || res is null)
                 throw new SyntaxException("Invalid syntax");
 

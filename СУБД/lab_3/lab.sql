@@ -244,7 +244,9 @@ BEGIN
 
     DBMS_OUTPUT.PUT_LINE(CHR(10) || 'Сравнение объектов:');
     
+    -- Проходимся по объектам, которые нам нужны
     FOR i IN 1 .. total LOOP
+        -- Смотрим общие объекты
         FOR same_object IN 
             (SELECT dev_objects.object_name 
             FROM all_objects dev_objects 
@@ -254,6 +256,7 @@ BEGIN
             FROM all_objects prod_objects 
             WHERE owner = prod_schema AND object_type = objects_arr(i)) 
         LOOP    
+            -- Убираем лишние пробелы и объединяем строки объекта в одну
             SELECT REGEXP_REPLACE(LISTAGG(text, ' ') WITHIN GROUP (ORDER BY line), ' {2,}', ' ') 
             INTO dev_text
             FROM all_source
@@ -314,10 +317,15 @@ RETURN VARCHAR2 IS
 BEGIN
     -- убираем лишние служебные данные
     IF object_type = 'TABLE' THEN
+        -- Добавляем разделители для скриптов
         DBMS_METADATA.SET_TRANSFORM_PARAM(DBMS_METADATA.SESSION_TRANSFORM, 'SQLTERMINATOR', TRUE);
+        -- Добавляем удобное форматиование
         DBMS_METADATA.SET_TRANSFORM_PARAM(DBMS_METADATA.SESSION_TRANSFORM, 'PRETTY', TRUE);
+        -- Убрать атрибуты сегментов для скриптов
         DBMS_METADATA.SET_TRANSFORM_PARAM(DBMS_METADATA.SESSION_TRANSFORM, 'SEGMENT_ATTRIBUTES', FALSE);
+        -- Нужно ли включать данные о хранении в скрипт
         DBMS_METADATA.SET_TRANSFORM_PARAM(DBMS_METADATA.SESSION_TRANSFORM, 'STORAGE', FALSE);
+        -- Нужно ли вклчать местоположение хранения
         DBMS_METADATA.SET_TRANSFORM_PARAM(DBMS_METADATA.SESSION_TRANSFORM, 'TABLESPACE', FALSE);
     END IF;
 
