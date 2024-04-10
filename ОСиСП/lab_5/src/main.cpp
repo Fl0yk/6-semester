@@ -73,7 +73,7 @@ void* sem_sysv_thread(void* arg) {
 }
 
 int main(int argc, char* argv[]) {
-    int num_threads = 10; // Default number of threads
+    int num_threads = 20; // Default number of threads
 
     if (argc > 1) {
         num_threads = atoi(argv[1]);
