@@ -15,13 +15,16 @@ void *handle_client(void *arg) {
     char buf[BUF_SIZE];
     int len;
 
+    // Читаем данные из сокета. 0 - флаг, чтоб удалять данные из сокета после считывания
     while((len = recv(socket, buf, BUF_SIZE, 0)) > 0) 
     {
         buf[len] = '\0';
         std::string answ = encode(std::string(buf));
+        // Записываем данные в сокет
         send(socket, answ.c_str(), answ.length(), 0);
     }
 
+    // Закрываем сокет и разрываем все соединения
     close(socket);
 
     return NULL;
@@ -40,7 +43,7 @@ int main(int argc, char *argv[]) {
     // Создаем интернетный потоковый сокет
     server_sock = socket(AF_INET, SOCK_STREAM, 0);
     if(server_sock < 0) {
-        printf("Could not create socket");
+        printf("Could not create socket\n");
         return 1;
     }
 
@@ -49,16 +52,18 @@ int main(int argc, char *argv[]) {
     // Чтоб наверняка перевести в big endian
     server.sin_port = htons(atoi(argv[1]));
 
-    // Привязываем сокет к адресу
+    // Привязываем сокет к адресу (типа даем имя)
     if(bind(server_sock, (struct sockaddr *)&server, sizeof(server)) < 0) {
-        printf("Bind failed");
+        printf("Bind failed\n");
         return 1;
     }
 
-    listen(server_sock, 3);
+    // Информируем, что ожидаем запросы на связь
+    // 1 - сколько запросов можно принять одновременно
+    // (! не максимальное число подключений)
+    listen(server_sock, 1);
 
     printf("Waiting for incoming connections...\n");
-    c = sizeof(struct sockaddr_in);
 
     // При подключении клиента заносим в переменную дескриптор файла
     while((client_sock = accept(server_sock, (struct sockaddr *)&client, (socklen_t*)&c))) {
@@ -75,7 +80,7 @@ int main(int argc, char *argv[]) {
     }
 
     if(client_sock < 0) {
-        printf("Accept failed");
+        printf("Accept failed\n");
         return 1;
     }
 

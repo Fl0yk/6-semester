@@ -20,14 +20,14 @@ int main(int argc, char *argv[])
     if(argc < 3)
     {
         printf("Usage: %s <ip address> <port>\n", argv[0]);
-        exit(1);
+        return 1;
     }
 
     //Create socket
-    if((sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+    if((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
-        perror("Could not create socket");
-        exit(1);
+        printf("Could not create socket\n");
+        return 1;
     }
 
     server.sin_addr.s_addr = inet_addr(argv[1]);
@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
     if(connect(sock, (struct sockaddr *)&server, sizeof(server)) < 0)
     {
         perror("Connect failed");
-        exit(1);
+        return 1;
     }
 
     puts("Connected to server");
@@ -50,14 +50,14 @@ int main(int argc, char *argv[])
 
         if(send(sock, message, strlen(message), 0) < 0)
         {
-            perror("Send failed");
-            exit(1);
+            printf("Send failed\n");
+            return 1;
         }
 
         if(recv(sock, message, MAX_MESSAGE_LENGTH, 0) <= 0) 
         {
-            perror("Answer failed");
-            exit(1);
+            printf("Answer failed\n");
+            return 1;
         }
 
         printf("Received message: %s\n", message);
