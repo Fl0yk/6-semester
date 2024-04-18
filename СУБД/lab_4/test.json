@@ -1,0 +1,251 @@
+[{
+    "type": "CREATE",
+    "table": "Test1",
+    "columns": [
+        {
+            "name": "Id",
+            "datatype": "INT",
+            "constraint": "NOT NULL"
+        },
+        {
+            "name": "Name",
+            "datatype": "VARCHAR2(100)"
+        }
+    ],
+    "primary": "Id"
+}
+,
+{
+    "type": "CREATE",
+    "table": "Test2",
+    "columns": [
+        {
+            "name": "Id",
+            "datatype": "INT",
+            "constraint": "NOT NULL"
+        },
+        {
+            "name": "Name",
+            "datatype": "VARCHAR2(100)"
+        },
+        {
+            "name": "Test1Id",
+            "datatype": "INT"
+        }
+    ],
+    "primary": "Id",
+    "foreign": [
+        {
+            "column": "Test1Id",
+            "refcolumn": "Id",
+            "reftable": "Test1"
+        }
+    ]
+}
+,
+
+{
+    "type": "INSERT",
+    "table": "Test1",
+    "columns": [
+        "Name"
+    ],
+    "values": [
+        [
+            "t1"
+        ]
+    ]
+}
+,
+{
+    "type": "INSERT",
+    "table": "Test1",
+    "columns": [
+        "Name"
+    ],
+    "values": [
+        [
+            "t2"
+        ]
+    ]
+}
+,
+{
+    "type": "INSERT",
+    "table": "Test2",
+    "columns": [
+        "Name",
+        "Test1Id"
+    ],
+    "values": [
+        [
+            "m1",
+            1
+        ]
+    ]
+}
+,
+{
+    "type": "INSERT",
+    "table": "Test2",
+    "columns": [
+        "Name",
+        "Test1Id"
+    ],
+    "values": [
+        [
+            "m2",
+            2
+        ]
+    ]
+}
+,
+
+{
+    "type": "UPDATE",
+    "table": "Test1",
+    "set": [
+        {
+            "column": "Name",
+            "value": "t0"
+        }
+    ],
+    "filters": [
+        {
+            "type": "WHERE",
+            "operator": "AND",
+            "body": [
+                "Id = 1"
+            ]
+        }
+    ]
+}
+,
+
+{
+    "type": "DELETE",
+    "table": "Test2",
+    "filters": [
+        {
+            "type": "WHERE",
+            "body": [
+                "Name = ''t0''"
+            ]
+        }
+    ]
+}
+
+,
+{
+    "type": "SELECT",
+    "columns": [
+        "Id",
+        "Name"
+    ],
+    "tables": [
+        "Test1"
+    ]
+}
+,
+{
+    "type": "SELECT",
+    "columns": [
+        "Test1.Id",
+        "Test2.Name"
+    ],
+    "tables": [
+        "Test1"
+    ]
+}
+,
+{
+    "type": "SELECT",
+    "columns": [
+        "Id",
+        "Name"
+    ],
+    "tables": [
+        "Test1"
+    ]
+}
+,
+{
+    "type": "SELECT",
+    "columns": [
+        "Test1.Id",
+        "Test2.Name"
+    ],
+    "tables": [
+        "Test1"
+    ],
+    "joins": [
+        {
+            "table": "Test2",
+            "condition": [
+                "Test1.ID = Test2.Test1ID"
+            ]
+        }
+    ]
+}
+,
+
+{
+    "type": "DROP",
+    "table": "Test2"
+}
+,
+{
+    "type": "DROP",
+    "table": "Test1"
+}
+,
+{
+    "type": "SELECT",
+    "columns": [
+        "*"
+    ],
+    "tables": [
+        "Products"
+    ],
+    "filters":{
+        "type": "WHERE",
+        "operator": "AND",
+        "body":[
+            "Price < 110",
+            {
+                "type": "NOT EXISTS",
+                "body": {
+                    "condition":{
+                        "type": "SELECT",
+                        "columns": "ProductId",
+                        "tables": "Orders",
+                        "filters":{
+                            "type": "WHERE",
+                            "body":[
+                                "Products.Id = Orders.ProductId"
+                            ]
+                        }
+                    }
+                }
+            }
+        ]
+    }
+}
+,
+{
+    "type": "SELECT",
+    "columns": [
+        "*"
+    ],
+    "tables": [
+        "Products"
+    ],
+    "filters":{
+        "type": "WHERE",
+        "operator": "AND",
+        "body":[
+            "Price < 110"
+        ]
+    }
+}
+]

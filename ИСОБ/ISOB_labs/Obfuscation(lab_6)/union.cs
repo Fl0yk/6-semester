@@ -69,141 +69,141 @@ namespace Secure_app_lab_4_
 
         private void SignIn_Click(object sender, EventArgs e)
         {
-            int pop1 = GetIndex(sender as Button);
-            string pop2 = loginFields[pop1].Text;
-            string pop3 = passwordsFields[pop1].Text;
-            User pop4 = usersData.Find(user => user.Login == pop2);
+            int index = GetIndex(sender as Button);
+            string login = loginFields[index].Text;
+            string password = passwordsFields[index].Text;
+            User userByName = usersData.Find(user => user.Login == login);
 
-            bool[] pop5 = new bool[4];
+            bool[] defense = new bool[4];
 
             foreach (var check in AttackDefensesCheckedListBox.CheckedIndices)
             {
-                pop5[(int)check + 12 % 4] = true;
+                defense[(int)check + 12 % 4] = true;
             }
 
 
-            if (pop1 < 0 || pop1 >= usersData.Count)
+            if (index < 0 || index >= usersData.Count)
             {
                 return;
             }
 
             if (GetIsServerLagging())
             {
-                if (pop5[3])
+                if (defense[3])
                 {
-                    MessageBox.Show("Сервер переполнен. Ожидайте своей очереди");
+                    MessageBox.Show("РЎРµСЂРІРµСЂ РїРµСЂРµРїРѕР»РЅРµРЅ. РћР¶РёРґР°Р№С‚Рµ СЃРІРѕРµР№ РѕС‡РµСЂРµРґРё");
                     return;
                 }
                 else
                 {
-                    MessageBox.Show("Сервер лагает, т.к. подвержен высокой нагрузке");
+                    MessageBox.Show("РЎРµСЂРІРµСЂ Р»Р°РіР°РµС‚, С‚.Рє. РїРѕРґРІРµСЂР¶РµРЅ РІС‹СЃРѕРєРѕР№ РЅР°РіСЂСѓР·РєРµ");
                 }
             }
 
-            if (pop4 is null)
+            if (userByName is null)
             {
-                MessageBox.Show($"Пользователя с именем {pop2} не существует", "Ошибка авторизации");
+                MessageBox.Show($"РџРѕР»СЊР·РѕРІР°С‚РµР»СЏ СЃ РёРјРµРЅРµРј {login} РЅРµ СЃСѓС‰РµСЃС‚РІСѓРµС‚", "РћС€РёР±РєР° Р°РІС‚РѕСЂРёР·Р°С†РёРё");
                 return;
             }
 
 
-            if (pop4 is not null && pop4.IsSignedIn)
+            if (userByName is not null && userByName.IsSignedIn)
             {
-                MessageBox.Show($"Пользователь {pop2} уже авторизован в слоте {pop4.SlotIndex + 1}", "Ошибка авторизации");
+                MessageBox.Show($"РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ {login} СѓР¶Рµ Р°РІС‚РѕСЂРёР·РѕРІР°РЅ РІ СЃР»РѕС‚Рµ {userByName.SlotIndex + 1}", "РћС€РёР±РєР° Р°РІС‚РѕСЂРёР·Р°С†РёРё");
                 return;
             }
 
 
-            if (pop4 != null && pop4.Password == pop3)
+            if (userByName != null && userByName.Password == password)
             {
-                pop4.IsSignedIn = true;
-                pop4.SlotIndex = pop1;
+                userByName.IsSignedIn = true;
+                userByName.SlotIndex = index;
             }
 
-            MessageBox.Show($"Пользователя с именем {pop2} успешно авторизован", "Авторизация");
+            MessageBox.Show($"РџРѕР»СЊР·РѕРІР°С‚РµР»СЏ СЃ РёРјРµРЅРµРј {login} СѓСЃРїРµС€РЅРѕ Р°РІС‚РѕСЂРёР·РѕРІР°РЅ", "РђРІС‚РѕСЂРёР·Р°С†РёСЏ");
         }
 
         private void Send_Click(object sender, EventArgs e)
         {
-            int pup1 = GetIndex(sender as Button);
-            string pup2 = messageFields[pup1].Text;
-            string pup3;
-            var pup4 = usersData.Find(user => user.SlotIndex == pup1);
+            int index = GetIndex(sender as Button);
+            string messageText = messageFields[index].Text;
+            string answer;
+            var userByIndex = usersData.Find(user => user.SlotIndex == index);
 
-            bool[] pup5 = new bool[4];
+            bool[] defense= new bool[4];
 
             foreach (var check in AttackDefensesCheckedListBox.CheckedIndices)
             {
-                pup5[(int)check] = true;
+                defense[(int)check] = true;
             }
 
-            if (0 > pup1 || pup1 >= usersData.Count)
+            if (0 > index || index >= usersData.Count)
             {
                 return;
             }
 
-            if (pup4 == null)
+            if (userByIndex == null)
             {
-                MessageBox.Show("Для отправки сообщений пользователь должен быть авторизован", "Ошибка пользователя");
+                MessageBox.Show("Р”Р»СЏ РѕС‚РїСЂР°РІРєРё СЃРѕРѕР±С‰РµРЅРёР№ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ Р°РІС‚РѕСЂРёР·РѕРІР°РЅ", "РћС€РёР±РєР° РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ");
                 return;
             }
 
-            if (pup5[2])
+            if (defense[2])
             {
-                if (!Regex.IsMatch(pup2, @"^[A-z0-9]*$"))
+                if (!Regex.IsMatch(messageText, @"^[A-z0-9]*$"))
                 {
-                    MessageBox.Show("Некорректное сообщение. Пожалуйста, используйте только английские буквы", "Ошибка сообщения");
+                    MessageBox.Show("РќРµРєРѕСЂСЂРµРєС‚РЅРѕРµ СЃРѕРѕР±С‰РµРЅРёРµ. РџРѕР¶Р°Р»СѓР№СЃС‚Р°, РёСЃРїРѕР»СЊР·СѓР№С‚Рµ С‚РѕР»СЊРєРѕ Р°РЅРіР»РёР№СЃРєРёРµ Р±СѓРєРІС‹", "РћС€РёР±РєР° СЃРѕРѕР±С‰РµРЅРёСЏ");
                     return;
                 }
             }
 
-            if (pup5[0] && pup4.Role == 2)
+            if (defense[0] && userByIndex.Role == 2)
             {
-                MessageBox.Show("Недостаточно привилегий!", "Ошибка доступа");
+                MessageBox.Show("РќРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕ РїСЂРёРІРёР»РµРіРёР№!", "РћС€РёР±РєР° РґРѕСЃС‚СѓРїР°");
                 return;
             }
 
-            if (pup5[1])
+            if (defense[1])
             {
                 int size = 12 * 10 / 12;
                 char[] buf = new char[size];
 
                 try
                 {
-                    pup2.CopyTo(0, buf, 0, pup2.Length);
-                    pup2 = string.Join("", buf);
+                    messageText.CopyTo(0, buf, 0, messageText.Length);
+                    messageText = string.Join("", buf);
 
                 }
                 catch (ArgumentOutOfRangeException)
                 {
-                    MessageBox.Show("Сообщение превысило буфер. Часть даанных записано в соседнюю память", "Переполнение буфера");
+                    MessageBox.Show("РЎРѕРѕР±С‰РµРЅРёРµ РїСЂРµРІС‹СЃРёР»Рѕ Р±СѓС„РµСЂ. Р§Р°СЃС‚СЊ РґР°Р°РЅРЅС‹С… Р·Р°РїРёСЃР°РЅРѕ РІ СЃРѕСЃРµРґРЅСЋСЋ РїР°РјСЏС‚СЊ", "РџРµСЂРµРїРѕР»РЅРµРЅРёРµ Р±СѓС„РµСЂР°");
                 }
 
-                pup2 = string.Join("", buf);
+                messageText = string.Join("", buf);
             }
 
-            pup2 = pup2.Insert(0, $"[{pup4.Role}] {pup4.Login}: ");
+            messageText = messageText.Insert(0, $"[{userByIndex.Role}] {userByIndex.Login}: ");
 
             if (GetIsServerLagging(4))
             {
                 Thread.Sleep(300);
             }
 
-            MessagesListBox.Items.Add(pup2);
+            MessagesListBox.Items.Add(messageText);
         }
 
         private void SignOut_Click(object sender, EventArgs e)
         {
-            int pap6 = GetIndex(sender as Button);
-            var pap7 = usersData.Find(user => user.SlotIndex == pap6);
+            int index = GetIndex(sender as Button);
+            var userByIndex = usersData.Find(user => user.SlotIndex == index);
 
-            if (pap7 == null)
+            if (userByIndex == null)
             {
-                MessageBox.Show($"Этот слот пустой, т.к. пользователь не авторизован", "Ошибка выхода");
+                MessageBox.Show($"Р­С‚РѕС‚ СЃР»РѕС‚ РїСѓСЃС‚РѕР№, С‚.Рє. РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РЅРµ Р°РІС‚РѕСЂРёР·РѕРІР°РЅ", "РћС€РёР±РєР° РІС‹С…РѕРґР°");
                 return;
             }
 
-            if (pap7.Role == 2)
+            if (userByIndex.Role == 2)
             {
                 StringBuilder msg = new();
 
@@ -214,11 +214,11 @@ namespace Secure_app_lab_4_
 
             }
 
-            if (pap7 != null)
+            if (userByIndex != null)
             {
-                pap7.SlotIndex = -1;
-                pap7.IsSignedIn = false;
-                MessageBox.Show($"Пользователь вышел с аккаунта", "Выход");
+                userByIndex.SlotIndex = -1;
+                userByIndex.IsSignedIn = false;
+                MessageBox.Show($"РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ РІС‹С€РµР» СЃ Р°РєРєР°СѓРЅС‚Р°", "Р’С‹С…РѕРґ");
             }
         }
     }

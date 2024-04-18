@@ -9,4 +9,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Folder Include="lab_6%28obfuscation%29\" />
+  </ItemGroup>
+
 </Project>
