@@ -50,6 +50,95 @@ namespace lab_5
 
                 B.Add(newPos.Value);
 
+                int deletedCount;
+                List<(int i, int j)> B_copy = new(B);
+
+                do
+                {
+                    deletedCount = 0;
+                    
+                    for (int i = 0; i < n; i++)
+                    {
+                        int count = 0;
+
+                        for (int j = 0; j < m; j++)
+                        {
+                            if (B_copy.Contains((i, j)))
+                                count++;
+                        }
+
+                        if (count <= 1)
+                        {
+                            for (int j = 0; j < m; j++)
+                            {
+                                if (B_copy.Contains((i, j)))
+                                {
+                                    deletedCount++;
+                                    B_copy.Remove((i, j));
+                                }
+                            }
+                        }
+                    }
+
+                    for (int j = 0; j < m; j++)
+                    {
+                        int count = 0;
+
+                        for (int i = 0; i < n; i++)
+                        {
+                            if (B_copy.Contains((i, j)))
+                                count++;
+                        }
+
+                        if (count <= 1)
+                        {
+                            for (int i = 0; i < n; i++)
+                            {
+                                if (B_copy.Contains((i, j)))
+                                {
+                                    deletedCount++;
+                                    B_copy.Remove((i, j));
+                                }
+                            }
+                        }
+                    }
+
+                } while (deletedCount != 0);
+
+
+                Dictionary<(int i, int j), int> marked_B = B_copy.ToDictionary(x => x, y => 0);
+                marked_B[newPos.Value] = 1;
+                IsPlusOrMinus((newPos.Value), ref marked_B);
+
+                // Шаг 5
+                double theta = double.PositiveInfinity;
+                int min_i = -1, min_j = -1;
+                foreach (var pos in B_copy)
+                {
+                    int i = pos.Item1, j = pos.Item2;
+                    if (marked_B.ContainsKey(pos) && marked_B[pos] == -1)
+                    {
+                        if (theta > X[pos.i, pos.j])
+                        {
+                            theta = X[pos.i, pos.j];
+                            min_i = i;
+                            min_j = j;
+                        }
+                    }
+                }
+
+                // Шаг 6
+                foreach (var pos in marked_B.Keys.ToList())
+                {
+                    int i = pos.Item1, j = pos.Item2;
+                    if (marked_B[pos] == 1)
+                        X[pos.i, pos.j] += theta;
+                    else
+                        X[pos.i, pos.j] -= theta;
+
+                    if (i == min_i && j == min_j)
+                        B.Remove(pos);
+                }
 
             }
         }
@@ -116,6 +205,31 @@ namespace lab_5
             }
 
             return null;
+        }
+
+        
+        private static void IsPlusOrMinus((int i, int j) pos, 
+                                ref Dictionary<(int i, int j), int> B)
+        {
+            foreach ((int i, int j) in B.Keys)
+            {
+                if (pos.i == i)
+                {
+                    if (B[(i, j)] == 0)
+                    {
+                        B[(i, j)] = (-1) * (B[pos]);
+                        IsPlusOrMinus((i, j), ref B);
+                    }
+                }
+                if (pos.j == j)
+                {
+                    if (B[(i, j)] == 0)
+                    {
+                        B[(i, j)] = (-1) * (B[pos]);
+                        IsPlusOrMinus((i, j), ref B);
+                    }
+                }
+            }
         }
     }
 }
