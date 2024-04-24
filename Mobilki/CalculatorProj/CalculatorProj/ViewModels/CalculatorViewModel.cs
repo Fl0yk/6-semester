@@ -13,6 +13,9 @@ namespace CalculatorProj.ViewModels
         [ObservableProperty]
         private string display;
 
+        [ObservableProperty]
+        private string expression ="";
+
         private const int _inputSize = 15;
 
         private IEngineeringCalculator<double> _calculator;
@@ -35,11 +38,13 @@ namespace CalculatorProj.ViewModels
         {
             switch (_curState.State)
             {
-                case State.FirstInit:
                 case State.Equal:
+                case State.FirstInit:
                 case State.Error:
-                    if (_curState.First.Length >= _inputSize)
-                        return;
+                    //if (_curState.First.Length >= _inputSize)
+                        //return;
+                    if (_states.Count == 0)
+                        Expression = "";
 
                     _curState.First = IsBaseStateOfDigit(_curState.First) ? 
                         input : _curState.First + input;
@@ -97,9 +102,6 @@ namespace CalculatorProj.ViewModels
                         Display = _curState.Third;
                     }
                     break;
-                case State.Error:
-                    throw new Exception();
-                    break;
                 default:
                     break;
 
@@ -135,15 +137,24 @@ namespace CalculatorProj.ViewModels
                 return;
             }
 
+            string operand = "";
             // Выбрали число, выбрали операцию, на экране остается первое число, пока не начнут вводить второе
             // 
             switch (_curState.State)
             {
+                case State.Error:
+                case State.Equal:
+                    Expression = "";
+                    goto case State.FirstInit;
                 case State.FirstInit:
                     _curState.FirstOp = op;
                     _curState.State = State.SecondInit;
+
+                    operand = _curState.First;
                     break;
                 case State.SecondInit:
+                    operand = _curState.Second;
+
                     //Например, сначала +, а затем *
                     if (IsComplexOp(op) && IsSimpleOp(_curState.FirstOp))
                     {
@@ -155,10 +166,10 @@ namespace CalculatorProj.ViewModels
                         _curState.First = resF1S;
                         _curState.FirstOp = op;
                         _curState.Second = "0";
-                        Display = _curState.First;
                     }
                     break;
                 case State.ThirdInit:
+                    operand = _curState.Third;
                     if (IsSimpleOp(op))
                     {
                         _curState.First = resF1S2T;
@@ -167,7 +178,7 @@ namespace CalculatorProj.ViewModels
                         _curState.Third = "0";
                         _curState.State = State.SecondInit;
 
-                        Display = _curState.First;
+                        //Display = _curState.First;
                     }
                     else
                     {
@@ -175,10 +186,16 @@ namespace CalculatorProj.ViewModels
                         _curState.SecondOp = op;
                         _curState.Third = "0";
 
-                        Display += _curState.Second;
+                        //Display += _curState.Second;
                     }
                     break;
             }
+
+            if (Expression.Length == 0 || Expression.Last() != ')')
+                Expression += operand;
+
+            Expression += operation;
+            Display = "0";
         }
 
         [RelayCommand]
@@ -196,6 +213,10 @@ namespace CalculatorProj.ViewModels
             {
                 switch (_curState.State)
                 {
+                    case State.Error:
+                    case State.Equal:
+                        Expression = "";
+                        goto case State.FirstInit;
                     case State.FirstInit:
                         _curState.First = GetUnaryOpResult(_curState.First, op);
                         Display = _curState.First;
@@ -239,21 +260,32 @@ namespace CalculatorProj.ViewModels
                 SetErrorState();
                 return;
             }
+            string lastOperand = "";
 
             switch (_curState.State)
             {
                 case State.SecondInit:
+                    lastOperand = _curState.Second;
                     _curState.First = resF1S;
                     _curState.Second = "0";
                     break;
                 case State.ThirdInit:
+                    lastOperand = _curState.Third;
                     ResetState();
                     _curState.First = resF1S2T;
                     break;
             }
 
-            _curState.State = State.FirstInit;
+            _curState.State = State.Equal;
             Display = _curState.First;
+
+            if (Expression.Length == 0)
+                return;
+            
+            // Могут сломать унарные операторы
+            if (Expression.Last() != ')')
+                Expression += lastOperand;
+            Expression += "=";
         }
 
         [RelayCommand]
@@ -317,6 +349,7 @@ namespace CalculatorProj.ViewModels
         {
             ResetState(clearStates: true);
             Display = _curState.First;
+            Expression = string.Empty;
         }
 
         [RelayCommand]
@@ -325,6 +358,7 @@ namespace CalculatorProj.ViewModels
             _states.Push(_curState);
             ResetState();
             Display = _curState.First;
+            Expression += "(";
         }
 
         [RelayCommand]
@@ -339,6 +373,21 @@ namespace CalculatorProj.ViewModels
 
             if (_curState.State == State.Error)
                 return;
+
+            switch (_curState.State)
+            {
+                case State.FirstInit:
+                    Expression += _curState.First;
+                    break;
+                case State.SecondInit:
+                    Expression += _curState.Second;
+                    break;
+                case State.ThirdInit:
+                    Expression += _curState.Third;
+                    break;
+            }
+
+            Expression += ")";
 
             _curState = st;
 
@@ -413,17 +462,17 @@ namespace CalculatorProj.ViewModels
             switch (op)
             {
                 case BinaryOpEnum.Sum:
-                    return _calculator.Sum(f, s).ToString("F15");
+                    return _calculator.Sum(f, s).ToString();
                 case BinaryOpEnum.Diff:
-                    return _calculator.Diff(f, s).ToString("F15");
+                    return _calculator.Diff(f, s).ToString();
                 case BinaryOpEnum.Mult:
-                    return _calculator.Mult(f, s).ToString("F15");
+                    return _calculator.Mult(f, s).ToString();
                 case BinaryOpEnum.Div:  
-                    return _calculator.Div(f, s).ToString("F15");
+                    return _calculator.Div(f, s).ToString();
                 case BinaryOpEnum.Yqrt:
-                    return _calculator.Yqrt(f, s).ToString("F15");
+                    return _calculator.Yqrt(s, f).ToString();
                 case BinaryOpEnum.PowY:
-                    return _calculator.PowY(f, s).ToString("F15");
+                    return _calculator.PowY(f, s).ToString();
                 default:
                     throw new Exception("???");
             }
@@ -435,35 +484,35 @@ namespace CalculatorProj.ViewModels
             switch (op)
             {
                 case UnaryOpEnum.Sqrt:
-                    return _calculator.Sqrt(d).ToString("F15");
+                    return _calculator.Sqrt(d).ToString();
                 case UnaryOpEnum.Minus:
-                    return _calculator.Minus(d).ToString("F15");
+                    return _calculator.Minus(d).ToString();
                 case UnaryOpEnum.Reverse:
-                    return _calculator.Reverse(d).ToString("F15");
+                    return _calculator.Reverse(d).ToString();
                 case UnaryOpEnum.Ln:
-                    return _calculator.Ln(d).ToString("F15");
+                    return _calculator.Ln(d).ToString();
                 case UnaryOpEnum.LogTen:
-                    return _calculator.Log10(d).ToString("F15");
+                    return _calculator.Log10(d).ToString();
                 case UnaryOpEnum.ePow:
-                    return _calculator.ePow(d).ToString("F15");
+                    return _calculator.ePow(d).ToString();
                 case UnaryOpEnum.TenPow:
-                    return _calculator.TenPow(d).ToString("F15");
+                    return _calculator.TenPow(d).ToString();
                 case UnaryOpEnum.Sin:
-                    return _calculator.Sin(d).ToString("F15");
+                    return _calculator.Sin(d).ToString();
                 case UnaryOpEnum.Cos:
-                    return _calculator.Cos(d).ToString("F15");
+                    return _calculator.Cos(d).ToString();
                 case UnaryOpEnum.Tan:
-                    return _calculator.Tan(d).ToString("F15");
+                    return _calculator.Tan(d).ToString();
                 case UnaryOpEnum.Tanh:
-                    return _calculator.Tanh(d).ToString("F15");
+                    return _calculator.Tanh(d).ToString();
                 case UnaryOpEnum.Sinh:
-                    return _calculator.Sinh(d).ToString("F15");
+                    return _calculator.Sinh(d).ToString();
                 case UnaryOpEnum.Cosh:
-                    return _calculator.Cosh(d).ToString("F15");
+                    return _calculator.Cosh(d).ToString();
                 case UnaryOpEnum.Pow2:
-                    return _calculator.Square(d).ToString("F15");
+                    return _calculator.Square(d).ToString();
                 case UnaryOpEnum.Pow3:
-                    return _calculator.Cube(d).ToString("F15");
+                    return _calculator.Cube(d).ToString();
                 default:
                     throw new Exception("???");
             }
@@ -521,6 +570,11 @@ namespace CalculatorProj.ViewModels
                 default:
                     return resF1S;
             }
+        }
+
+        private bool LastIsBinaryOp()
+        {
+            return Constants.BinaryOpDict.Keys.Contains(Expression.Last().ToString());
         }
 
         #endregion

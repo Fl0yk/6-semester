@@ -10,7 +10,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="lab_6%28obfuscation%29\" />
+    <Compile Remove="lab_6%28obfuscation%29\**" />
+    <EmbeddedResource Remove="lab_6%28obfuscation%29\**" />
+    <None Remove="lab_6%28obfuscation%29\**" />
   </ItemGroup>
 
 </Project>

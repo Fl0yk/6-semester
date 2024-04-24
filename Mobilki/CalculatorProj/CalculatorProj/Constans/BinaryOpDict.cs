@@ -15,8 +15,8 @@ namespace CalculatorProj.Constans
             { "-", BinaryOpEnum.Diff },
             { "*", BinaryOpEnum.Mult },
             { "/", BinaryOpEnum.Div },
-            { "y√x", BinaryOpEnum.Yqrt },
-            {"x^y", BinaryOpEnum.PowY }
+            { "√", BinaryOpEnum.Yqrt },
+            {"^", BinaryOpEnum.PowY }
         };
     }
 }
