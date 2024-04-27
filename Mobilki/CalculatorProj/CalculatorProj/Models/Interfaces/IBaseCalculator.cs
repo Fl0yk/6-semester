@@ -2,15 +2,15 @@
 {
     public interface IBaseCalculator<T>
     {
-        public T Sum(T first, T second);
+        public Task<T> Sum(T first, T second);
 
-        public T Diff(T first, T second);
+        public Task<T> Diff(T first, T second);
 
-        public T Mult(T first, T second);
+        public Task<T> Mult(T first, T second);
                 
-        public T Div(T first, T second);
+        public Task<T> Div(T first, T second);
 
-        public T Minus(T digit);
+        public Task<T> Minus(T digit);
 
     }
 }

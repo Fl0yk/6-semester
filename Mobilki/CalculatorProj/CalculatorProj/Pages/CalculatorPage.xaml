@@ -3,31 +3,9 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="CalculatorProj.Pages.CalculatorPage"
              Title="CalculatorPage">
-    <Grid x:Name="buttons" BackgroundColor="Pink">
-        <!--#region Стиль на столбцы, чтоб убирать лишние-->
-        <VisualStateManager.VisualStateGroups>
-            <VisualStateGroup Name="ValidityStates">
-                <VisualState Name="Horizontal">
-                    <VisualState.Setters>
-                        <Setter Property="ColumnDefinitions"
-                            Value="*, *, *, *, *, *, *, *"/>
-                    </VisualState.Setters>
-                </VisualState>
-                <VisualState Name="Vertical">
-                    <VisualState.Setters>
-                        <Setter Property="ColumnDefinitions"
-                                        Value="0, 0, 0, 0, *, *, *, *"/>
-                    </VisualState.Setters>
-                </VisualState>
-            </VisualStateGroup>
-        </VisualStateManager.VisualStateGroups>
-        <!--#endregion-->
-
+    <Grid BackgroundColor="Pink">
         <!--#region Определение столбцов и строк-->
         <Grid.ColumnDefinitions>
-            <ColumnDefinition />
-            <ColumnDefinition />
-            <ColumnDefinition />
             <ColumnDefinition />
             <ColumnDefinition />
             <ColumnDefinition />
@@ -36,6 +14,7 @@
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <!--Строка ввода/вывода-->
+            <RowDefinition />
             <RowDefinition />
             <RowDefinition />
             <RowDefinition />
@@ -76,199 +55,150 @@
         <!--#endregion-->
         
         <!--#region Базовые кнопки-->
-        <Button Text="AC"
-            Grid.Row="2" Grid.Column="4"
+        <Button Text="AC" x:Name="but1"
+            Grid.Row="2" Grid.Column="3"
             Command="{ Binding ClearAllCommand }"/>
 
-        <Button Text="C"
-            Grid.Row="2" Grid.Column="5"
+        <Button Text="C" x:Name="but2"
+            Grid.Row="2" Grid.Column="4"
             Command="{ Binding ClearCurrentDigitCommand }"/>
 
-        <Button Text="&lt;="
-            Grid.Row="2" Grid.Column="6"
-            Command="{ Binding ClearOneSymbolCommand }"/>
-
-        <Button Text="/"
-            Grid.Row="2" Grid.Column="7"
+        <Button Text="/" x:Name="but3"
+            Grid.Row="3" Grid.Column="4"
             Command="{ Binding BinaryOperationHandlerCommand }"
             CommandParameter="/"/>
 
-        <Button Text="7"
-            Grid.Row="3" Grid.Column="4"
+        <Button Text="7" x:Name="but4"
+            Grid.Row="4" Grid.Column="1"
             Command="{ Binding InputDigitHandlerCommand }"
             CommandParameter="7"/>
 
-        <Button Text="8"
-            Grid.Row="3" Grid.Column="5"
+        <Button Text="8" x:Name="but5"
+            Grid.Row="4" Grid.Column="2"
             Command="{ Binding InputDigitHandlerCommand }"
             CommandParameter="8"/>
 
-        <Button Text="9"
-            Grid.Row="3" Grid.Column="6"
+        <Button Text="9" x:Name="but6"
+            Grid.Row="4" Grid.Column="3"
             Command="{ Binding InputDigitHandlerCommand }"
             CommandParameter="9"/>
 
-        <Button Text="x"
-            Grid.Row="3" Grid.Column="7"
+        <Button Text="x" x:Name="but7"
+            Grid.Row="4" Grid.Column="4"
             Command="{ Binding BinaryOperationHandlerCommand }"
             CommandParameter="*"/>
 
-        <Button Text="4"
-            Grid.Row="4" Grid.Column="4"
+        <Button Text="4"  x:Name="but8"
+            Grid.Row="5" Grid.Column="1"
             Command="{ Binding InputDigitHandlerCommand }"
             CommandParameter="4"/>
 
-        <Button Text="5"
-            Grid.Row="4" Grid.Column="5"
+        <Button Text="5" x:Name="but9"
+            Grid.Row="5" Grid.Column="2"
             Command="{ Binding InputDigitHandlerCommand }"
             CommandParameter="5"/>
 
-        <Button Text="6"
-            Grid.Row="4" Grid.Column="6"
+        <Button Text="6" x:Name="but10"
+            Grid.Row="5" Grid.Column="3"
             Command="{ Binding InputDigitHandlerCommand }"
             CommandParameter="6"/>
 
-        <Button Text="-"
-            Grid.Row="4" Grid.Column="7"
+        <Button Text="-" x:Name="but11"
+            Grid.Row="5" Grid.Column="4"
             Command="{ Binding BinaryOperationHandlerCommand }"
             CommandParameter="-"/>
 
-        <Button Text="1"
-            Grid.Row="5" Grid.Column="4"
+        <Button Text="1" x:Name="but12"
+            Grid.Row="6" Grid.Column="1"
             Command="{ Binding InputDigitHandlerCommand }"
             CommandParameter="1"/>
 
-        <Button Text="2"
-            Grid.Row="5" Grid.Column="5"
+        <Button Text="2" x:Name="but13"
+            Grid.Row="6" Grid.Column="2"
             Command="{ Binding InputDigitHandlerCommand }"
             CommandParameter="2"/>
 
-        <Button Text="3"
-            Grid.Row="5" Grid.Column="6"
+        <Button Text="3" x:Name="but14"
+            Grid.Row="6" Grid.Column="3"
             Command="{ Binding InputDigitHandlerCommand }"
             CommandParameter="3"/>
 
-        <Button Text="+"
+        <Button Text="+" x:Name="but15"
             FontSize="25"
-            Grid.Row="5" Grid.Column="7"
+            Grid.Row="6" Grid.Column="4"
             Command="{ Binding BinaryOperationHandlerCommand }"
             CommandParameter="+"/>
 
-        <Button Text="+/-"
-            Grid.Row="6" Grid.Column="4"
+        <Button Text="+/-" x:Name="but16"
+            Grid.Row="7" Grid.Column="1"
             Command="{ Binding UnaryOperatorHandlerCommand }"
             CommandParameter="+/-"/>
 
-        <Button Text="0"
-            Grid.Row="6" Grid.Column="5"
+        <Button Text="0" x:Name="but17"
+            Grid.Row="7" Grid.Column="2"
             Command="{ Binding InputDigitHandlerCommand }"
             CommandParameter="0"/>
 
-        <Button Text=","
-            Grid.Row="6" Grid.Column="6"
+        <Button Text="," x:Name="but18"
+            Grid.Row="7" Grid.Column="3"
             Command="{ Binding InputCommaHandlerCommand }"/>
 
-        <Button Text="="
-            Grid.Row="6" Grid.Column="7"
+        <Button Text="=" x:Name="but19"
+            Grid.Row="7" Grid.Column="4"
             BackgroundColor="LightSlateGray" TextColor="White"
             Command="{ Binding EqualHandlerCommand }"/>
         <!--#endregion-->
         
         <!--#region Функционал инжинерного калькулятора-->
-        <Button Text="x^2"
-            Grid.Row="2" Grid.Column="0"
-            Command="{ Binding UnaryOperatorHandlerCommand }"
-            CommandParameter="x^2"/>
-        
-        <Button Text="sqrt(x)"
-            Grid.Row="2" Grid.Column="1"
-            Command="{ Binding UnaryOperatorHandlerCommand }"
-            CommandParameter="sqrt"/>
-        
-        <Button Text="("
-            Grid.Row="2" Grid.Column="2"
-            Command="{ Binding OpenBracketCommand }"/>
-        
-        <Button Text=")"
-            Grid.Row="2" Grid.Column="3"
-            Command="{ Binding CloseBracketCommand }"/>
-        
-        <Button Text="x^3"
+        <Button Text="x^2" x:Name="but20"
             Grid.Row="3" Grid.Column="0"
             Command="{ Binding UnaryOperatorHandlerCommand }"
-            CommandParameter="x^3"/>
+            CommandParameter="x^2"/>
 
-        <Button Text="x√y"
-            Grid.Row="3" Grid.Column="1"
-            Command="{ Binding BinaryOperationHandlerCommand }"
-            CommandParameter="√"/>
-        
-        <Button Text="log_10"
-            Grid.Row="3" Grid.Column="2"
-            Command="{ Binding UnaryOperatorHandlerCommand }"
-            CommandParameter="log10"/>
-        
-        <Button Text="ln"
-            Grid.Row="3" Grid.Column="3"
-            Command="{ Binding UnaryOperatorHandlerCommand }"
-            CommandParameter="ln"/>
-        
-        <Button Text="x^y"
+        <Button Text="sqrt(x)" x:Name="but21"
             Grid.Row="4" Grid.Column="0"
-            Command="{ Binding BinaryOperationHandlerCommand }"
-            CommandParameter="^"/>
-        
-        <Button Text="1/x"
-            Grid.Row="4" Grid.Column="1"
             Command="{ Binding UnaryOperatorHandlerCommand }"
-            CommandParameter="1/x"/>
-        
-        <Button Text="10^x"
-            Grid.Row="4" Grid.Column="2"
-            Command="{ Binding UnaryOperatorHandlerCommand }"
-            CommandParameter="10^x"/>
-        
-        <Button Text="e^x"
-            Grid.Row="4" Grid.Column="3"
-            Command="{ Binding UnaryOperatorHandlerCommand }"
-            CommandParameter="e^x"/>
-        
-        <Button Text="sin"
+            CommandParameter="sqrt"/>
+
+        <Button Text="(" x:Name="but22"
+            Grid.Row="3" Grid.Column="2"
+            Command="{ Binding OpenBracketCommand }"/>
+
+        <Button Text=")" x:Name="but23"
+            Grid.Row="3" Grid.Column="3"
+            Command="{ Binding CloseBracketCommand }"/>
+
+        <Button Text="ln" x:Name="but24"
             Grid.Row="5" Grid.Column="0"
             Command="{ Binding UnaryOperatorHandlerCommand }"
+            CommandParameter="ln"/>
+
+        <Button Text="x^y" x:Name="but25"
+            Grid.Row="2" Grid.Column="0"
+            Command="{ Binding BinaryOperationHandlerCommand }"
+            CommandParameter="^"/>
+
+        <Button Text="1/x" x:Name="but26"
+            Grid.Row="3" Grid.Column="1"
+            Command="{ Binding UnaryOperatorHandlerCommand }"
+            CommandParameter="1/x"/>
+
+        <Button Text="sin" x:Name="but27"
+            Grid.Row="2" Grid.Column="1"
+            Command="{ Binding UnaryOperatorHandlerCommand }"
             CommandParameter="sin"/>
-        
-        <Button Text="cos"
-            Grid.Row="5" Grid.Column="1"
+
+        <Button Text="cos" x:Name="but28"
+            Grid.Row="2" Grid.Column="2"
             Command="{ Binding UnaryOperatorHandlerCommand }"
             CommandParameter="cos"/>
-        
-        <Button Text="tan"
-            Grid.Row="5" Grid.Column="2"
-            Command="{ Binding UnaryOperatorHandlerCommand }"
-            CommandParameter="tan"/>
-        
-        <Button Text="e"
-            Grid.Row="5" Grid.Column="3"
-            Command="{ Binding ConstantECommand }"/>
-        
-        <Button Text="sinh"
+
+        <Button Text="e" x:Name="but29"
             Grid.Row="6" Grid.Column="0"
-            Command="{ Binding UnaryOperatorHandlerCommand }"
-            CommandParameter="sinh"/>
-        
-        <Button Text="cosh"
-            Grid.Row="6" Grid.Column="1"
-            Command="{ Binding UnaryOperatorHandlerCommand }"
-            CommandParameter="cosh"/>
-        
-        <Button Text="tanh"
-            Grid.Row="6" Grid.Column="2"
-            Command="{ Binding UnaryOperatorHandlerCommand }"
-            CommandParameter="tanh"/>
-        
-        <Button Text="Pi"
-            Grid.Row="6" Grid.Column="3"
+            Command="{ Binding ConstantECommand }"/>
+
+        <Button Text="Pi" x:Name="but30"
+            Grid.Row="7" Grid.Column="0"
             Command="{ Binding ConstantPiCommand }"/>
         <!--#endregion-->
         

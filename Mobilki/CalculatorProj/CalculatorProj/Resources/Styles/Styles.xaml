@@ -24,8 +24,8 @@
     </Style>
 
     <Style TargetType="Button">
-        <!--<Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource PrimaryDarkText}}" />-->
-        <!--<Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />-->
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource PrimaryDarkText}}" />
+        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
         <Setter Property="FontFamily" Value="OpenSansRegular"/>
         <Setter Property="FontSize" Value="14"/>
         <Setter Property="BorderWidth" Value="0"/>
@@ -38,10 +38,20 @@
             <VisualStateGroupList>
                 <VisualStateGroup x:Name="CommonStates">
                     <VisualState x:Name="Normal" />
-                    <VisualState x:Name="Disabled">
+                    <VisualState x:Name="Pressed">
                         <VisualState.Setters>
-                            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray950}, Dark={StaticResource Gray200}}" />
-                            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" />
+                            <Setter Property="TextColor" Value="Black" />
+                            <Setter Property="BackgroundColor" Value="DarkKhaki" />
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState Name="Horizontal">
+                        <VisualState.Setters>
+                            <Setter Property="FontSize" Value="10"/>
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState Name="Vertical">
+                        <VisualState.Setters>
+                            <Setter Property="FontSize"  Value="14"/>
                         </VisualState.Setters>
                     </VisualState>
                     <!--<VisualState x:Name="PointerOver" />-->

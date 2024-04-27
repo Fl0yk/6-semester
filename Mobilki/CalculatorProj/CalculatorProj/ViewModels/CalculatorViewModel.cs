@@ -16,15 +16,17 @@ namespace CalculatorProj.ViewModels
         [ObservableProperty]
         private string expression ="";
 
-        private const int _inputSize = 15;
+        private Mutex _buttonsMutex = new();
 
-        private IEngineeringCalculator<double> _calculator;
+        //private const int _inputSize = 15;
+
+        private IEngineeringCalculator<Java.Math.BigDecimal> _calculator;
 
         private CalculatorState _curState = new();
 
         private Stack<CalculatorState> _states = new();
 
-        public CalculatorViewModel(IEngineeringCalculator<double> baseCalculator)
+        public CalculatorViewModel(IEngineeringCalculator<Java.Math.BigDecimal> baseCalculator)
         {
             Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
             Display = _curState.First;
@@ -36,6 +38,9 @@ namespace CalculatorProj.ViewModels
         [RelayCommand]
         public void InputDigitHandler(string input)
         {
+            if (Display == "Ждем-с")
+                return;
+
             switch (_curState.State)
             {
                 case State.Equal:
@@ -52,8 +57,8 @@ namespace CalculatorProj.ViewModels
                     Display = _curState.First.ToString();
                     break;
                 case State.SecondInit:
-                    if (_curState.Second.Length >= _inputSize)
-                        return;
+                    //if (_curState.Second.Length >= _inputSize)
+                        //return;
 
                     _curState.Second = IsBaseStateOfDigit(_curState.Second) ?
                         input : _curState.Second + input;
@@ -61,8 +66,8 @@ namespace CalculatorProj.ViewModels
                     Display = _curState.Second.ToString();
                     break;
                 case State.ThirdInit:
-                    if (_curState.Third.Length >= _inputSize)
-                        return;
+                    //if (_curState.Third.Length >= _inputSize)
+                        //return;
 
                     _curState.Third = IsBaseStateOfDigit(_curState.Third) ?
                         input : _curState.Third + input;
@@ -78,27 +83,30 @@ namespace CalculatorProj.ViewModels
         [RelayCommand]
         public void InputCommaHandler()
         {
+            if (Display == "Ждем-с")
+                return;
+
             switch (_curState.State)
             {
                 case State.FirstInit:
                 case State.Equal:
                     if (!IsContainsComma(_curState.First))
                     {
-                        _curState.First += ',';
+                        _curState.First += '.';
                         Display = _curState.First;
                     }
                     break;
                 case State.SecondInit:
                     if (!IsContainsComma(_curState.Second))
                     {
-                        _curState.Second += ',';
+                        _curState.Second += '.';
                         Display = _curState.Second;
                     }
                     break;
                 case State.ThirdInit:
                     if (!IsContainsComma(_curState.Third))
                     {
-                        _curState.Third += ',';
+                        _curState.Third += '.';
                         Display = _curState.Third;
                     }
                     break;
@@ -109,36 +117,42 @@ namespace CalculatorProj.ViewModels
 
             bool IsContainsComma(String digit)
             {
-                return digit.Contains(",");
+                return digit.Contains(".");
             }
         }
 
         [RelayCommand]
-        public void BinaryOperationHandler(string operation)
+        public async Task BinaryOperationHandler(string operation)
         {
+            if (Display == "Ждем-с")
+                return;
+
             if (!Constants.BinaryOpDict.ContainsKey(operation))
             {
                 SetErrorState("Данная операция не существует");
+                _buttonsMutex.ReleaseMutex();
                 return;
             }
 
             BinaryOpEnum op = Constants.BinaryOpDict[operation];
+            Display = "Ждем-с";
 
             string resF1S, resS2T, resF1S2T;
             try
             {
-                resF1S = GetBinaryOpResult(_curState.First, _curState.FirstOp, _curState.Second);
-                resS2T = GetBinaryOpResult(_curState.Second, _curState.SecondOp, _curState.Third);
-                resF1S2T = GetBinaryOpResult(_curState.First, _curState.FirstOp, resS2T);
+                resF1S = await GetBinaryOpResult(_curState.First, _curState.FirstOp, _curState.Second);
+                resS2T = await GetBinaryOpResult(_curState.Second, _curState.SecondOp, _curState.Third);
+                resF1S2T = await GetBinaryOpResult(_curState.First, _curState.FirstOp, resS2T);
             }
-            catch (CalculationException)
+            catch (CalculationException ex)
             {
-                SetErrorState();
+                SetErrorState(ex.Message);
+                _buttonsMutex.ReleaseMutex();
                 return;
             }
 
             string operand = "";
-            // Выбрали число, выбрали операцию, на экране остается первое число, пока не начнут вводить второе
+            // Выбрали число, выбрали операцию
             // 
             switch (_curState.State)
             {
@@ -199,13 +213,18 @@ namespace CalculatorProj.ViewModels
         }
 
         [RelayCommand]
-        public void UnaryOperatorHandler(string operation)
+        public async Task UnaryOperatorHandler(string operation)
         {
+            if (Display == "Ждем-с")
+                return;
+
             if (!Constants.UnaryOpDict.ContainsKey(operation))
             {
                 SetErrorState("Такой операции нет");
+                _buttonsMutex.ReleaseMutex();
                 return;
             }
+            Display = "Ждем-с";
 
             UnaryOpEnum op = Constants.UnaryOpDict[operation];
 
@@ -218,15 +237,15 @@ namespace CalculatorProj.ViewModels
                         Expression = "";
                         goto case State.FirstInit;
                     case State.FirstInit:
-                        _curState.First = GetUnaryOpResult(_curState.First, op);
+                        _curState.First = await GetUnaryOpResult(_curState.First, op);
                         Display = _curState.First;
                         break;
                     case State.SecondInit:
-                        _curState.Second = GetUnaryOpResult(_curState.Second, op);
+                        _curState.Second = await GetUnaryOpResult(_curState.Second, op);
                         Display = _curState.Second;
                         break;
                     case State.ThirdInit:
-                        _curState.Third = GetUnaryOpResult(_curState.Third, op);
+                        _curState.Third = await GetUnaryOpResult(_curState.Third, op);
                         Display = _curState.Third;
                         break;
                 }
@@ -235,29 +254,42 @@ namespace CalculatorProj.ViewModels
             {
                 SetErrorState();
             }
-
+            catch (OverflowException)
+            {
+                SetErrorState("Нехватка памяти");
+            }
+            catch (Java.Lang.ArithmeticException ex)
+            {
+                SetErrorState(ex.Message);
+            }
         }
 
 
         [RelayCommand]
-        public void EqualHandler()
+        public async Task EqualHandler()
         {
-            while(_states.Count > 0)
+            if (Display == "Ждем-с")
+                return;
+
+            while (_states.Count > 0)
             {
-                CloseBracket();
+                await CloseBracket();
             }
 
             string resF1S, resS2T, resF1S2T;
 
+            Display = "Ждем-с";
+
             try
             {
-                resF1S = GetBinaryOpResult(_curState.First, _curState.FirstOp, _curState.Second);
-                resS2T = GetBinaryOpResult(_curState.Second, _curState.SecondOp, _curState.Third);
-                resF1S2T = GetBinaryOpResult(_curState.First, _curState.FirstOp, resS2T);
+                resF1S = await GetBinaryOpResult(_curState.First, _curState.FirstOp, _curState.Second);
+                resS2T = await GetBinaryOpResult(_curState.Second, _curState.SecondOp, _curState.Third);
+                resF1S2T = await GetBinaryOpResult(_curState.First, _curState.FirstOp, resS2T);
             }
-            catch (CalculationException)
+            catch (CalculationException ex)
             {
-                SetErrorState();
+                SetErrorState(ex.Message);
+                _buttonsMutex.ReleaseMutex();
                 return;
             }
             string lastOperand = "";
@@ -280,7 +312,10 @@ namespace CalculatorProj.ViewModels
             Display = _curState.First;
 
             if (Expression.Length == 0)
+            {
+                _buttonsMutex.ReleaseMutex();
                 return;
+            }
             
             // Могут сломать унарные операторы
             if (Expression.Last() != ')')
@@ -291,6 +326,9 @@ namespace CalculatorProj.ViewModels
         [RelayCommand]
         public void ClearCurrentDigit()
         {
+            if (Display == "Ждем-с")
+                return;
+
             switch (_curState.State)
             {
                 case State.FirstInit:
@@ -312,6 +350,9 @@ namespace CalculatorProj.ViewModels
         [RelayCommand]
         public void ClearOneSymbol()
         {
+            if (Display == "Ждем-с")
+                return;
+
             switch (_curState.State)
             {
                 case State.FirstInit:
@@ -347,6 +388,9 @@ namespace CalculatorProj.ViewModels
         [RelayCommand]
         public void ClearAll()
         {
+            if (Display == "Ждем-с")
+                return;
+
             ResetState(clearStates: true);
             Display = _curState.First;
             Expression = string.Empty;
@@ -355,6 +399,9 @@ namespace CalculatorProj.ViewModels
         [RelayCommand]
         public void OpenBracket()
         {
+            if (Display == "Ждем-с")
+                return;
+
             _states.Push(_curState);
             ResetState();
             Display = _curState.First;
@@ -362,17 +409,28 @@ namespace CalculatorProj.ViewModels
         }
 
         [RelayCommand]
-        public void CloseBracket()
+        public async Task CloseBracket()
         {
-            if (_states.Count == 0)
+            if (Display == "Ждем-с")
                 return;
+
+            if (_states.Count == 0)
+            {
+                _buttonsMutex.ReleaseMutex();
+                return;
+            }
 
             CalculatorState st = _states.Pop();
 
-            string resState = EvalStateResult();
+            //Display = "Ждем-с";
+
+            string resState = await EvalStateResult();
 
             if (_curState.State == State.Error)
+            {
+                _buttonsMutex.ReleaseMutex();
                 return;
+            }
 
             switch (_curState.State)
             {
@@ -409,6 +467,9 @@ namespace CalculatorProj.ViewModels
         [RelayCommand]
         public void ConstantPi()
         {
+            if (Display == "Ждем-с")
+                return;
+
             switch (_curState.State)
             {
                 case State.FirstInit:
@@ -431,6 +492,9 @@ namespace CalculatorProj.ViewModels
         [RelayCommand]
         public void ConstantE()
         {
+            if (Display == "Ждем-с")
+                return;
+
             switch (_curState.State)
             {
                 case State.FirstInit:
@@ -454,65 +518,52 @@ namespace CalculatorProj.ViewModels
 
         #region Helper functions
 
-        private string GetBinaryOpResult(string first, BinaryOpEnum op, string second)
+        private async Task<string> GetBinaryOpResult(string first, BinaryOpEnum op, string second)
         {
-            double f = double.Parse(first);
-            double s = double.Parse(second);
+            //Display = "Ждем-с";
+            Java.Math.BigDecimal f = new Java.Math.BigDecimal(first);
+            Java.Math.BigDecimal s = new Java.Math.BigDecimal(second);
 
             switch (op)
             {
                 case BinaryOpEnum.Sum:
-                    return _calculator.Sum(f, s).ToString();
+                    return (await _calculator.Sum(f, s)).ToEngineeringString()!;
                 case BinaryOpEnum.Diff:
-                    return _calculator.Diff(f, s).ToString();
+                    return (await _calculator.Diff(f, s)).ToEngineeringString()!;
                 case BinaryOpEnum.Mult:
-                    return _calculator.Mult(f, s).ToString();
+                    return (await _calculator.Mult(f, s)).ToEngineeringString()!;
                 case BinaryOpEnum.Div:  
-                    return _calculator.Div(f, s).ToString();
-                case BinaryOpEnum.Yqrt:
-                    return _calculator.Yqrt(s, f).ToString();
+                    return (await _calculator.Div(f, s)).ToEngineeringString()!;
                 case BinaryOpEnum.PowY:
-                    return _calculator.PowY(f, s).ToString();
+                    if (int.TryParse(second, out int exp))
+                        return (await _calculator.PowY(f, exp, 45)).ToEngineeringString()!;
+                    else
+                        throw new CalculationException("Степень должна быть меньше " + int.MaxValue);
                 default:
                     throw new Exception("???");
             }
         }
 
-        private string GetUnaryOpResult(string digit, UnaryOpEnum op)
+        private async Task<string> GetUnaryOpResult(string digit, UnaryOpEnum op)
         {
-            double d = double.Parse(digit);
+            Java.Math.BigDecimal d = new Java.Math.BigDecimal(digit);
             switch (op)
             {
                 case UnaryOpEnum.Sqrt:
-                    return _calculator.Sqrt(d).ToString();
+                    return (await _calculator.Sqrt(d)).ToEngineeringString()!;
                 case UnaryOpEnum.Minus:
-                    return _calculator.Minus(d).ToString();
+                    return (await _calculator.Minus(d)).ToEngineeringString()!;
                 case UnaryOpEnum.Reverse:
-                    return _calculator.Reverse(d).ToString();
+                    return (await _calculator.Reverse(d)).ToEngineeringString()!;
                 case UnaryOpEnum.Ln:
-                    return _calculator.Ln(d).ToString();
-                case UnaryOpEnum.LogTen:
-                    return _calculator.Log10(d).ToString();
-                case UnaryOpEnum.ePow:
-                    return _calculator.ePow(d).ToString();
-                case UnaryOpEnum.TenPow:
-                    return _calculator.TenPow(d).ToString();
+                    return (await _calculator.Ln(d)).ToEngineeringString()!;
                 case UnaryOpEnum.Sin:
-                    return _calculator.Sin(d).ToString();
+                    return (await _calculator.Sin(d)).ToEngineeringString()!;
                 case UnaryOpEnum.Cos:
-                    return _calculator.Cos(d).ToString();
-                case UnaryOpEnum.Tan:
-                    return _calculator.Tan(d).ToString();
-                case UnaryOpEnum.Tanh:
-                    return _calculator.Tanh(d).ToString();
-                case UnaryOpEnum.Sinh:
-                    return _calculator.Sinh(d).ToString();
-                case UnaryOpEnum.Cosh:
-                    return _calculator.Cosh(d).ToString();
+                    return (await _calculator.Cos(d)).ToEngineeringString()!;
                 case UnaryOpEnum.Pow2:
-                    return _calculator.Square(d).ToString();
-                case UnaryOpEnum.Pow3:
-                    return _calculator.Cube(d).ToString();
+                    var res = await _calculator.Square(d);
+                    return res.ToEngineeringString()!;
                 default:
                     throw new Exception("???");
             }
@@ -545,15 +596,15 @@ namespace CalculatorProj.ViewModels
             return digit == "0" || digit == "-0";
         }
 
-        private string EvalStateResult()
+        private async Task<string> EvalStateResult()
         {
             string resF1S, resS2T, resF1S2T;
 
             try
             {
-                resF1S = GetBinaryOpResult(_curState.First, _curState.FirstOp, _curState.Second);
-                resS2T = GetBinaryOpResult(_curState.Second, _curState.SecondOp, _curState.Third);
-                resF1S2T = GetBinaryOpResult(_curState.First, _curState.FirstOp, resS2T);
+                resF1S = await GetBinaryOpResult(_curState.First, _curState.FirstOp, _curState.Second);
+                resS2T = await GetBinaryOpResult(_curState.Second, _curState.SecondOp, _curState.Third);
+                resF1S2T = await GetBinaryOpResult(_curState.First, _curState.FirstOp, resS2T);
             }
             catch (CalculationException)
             {

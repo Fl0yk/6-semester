@@ -5,121 +5,73 @@ namespace CalculatorProj.Models.Implementations
 {
     public class DoubleEngineeringCalculator : IEngineeringCalculator<double>
     {
-        public double Pi => Math.PI;
+        public double Pi => throw new NotImplementedException();
 
-        public double E => Math.E;
+        public double E => throw new NotImplementedException();
 
-        public double Cos(double digit)
-        {   
-            double res =  Math.Cos(digit);
-            CalculationException.ThrowIfNanOrInfinity(res);
-            return res;
+        public Task<double> Cos(double digit)
+        {
+            throw new NotImplementedException();
         }
 
-        public double Cosh(double digit)
+        public Task<double> Diff(double first, double second)
         {
-            return Math.Cosh(digit);
+            throw new NotImplementedException();
         }
 
-        public double Cube(double digit)
+        public Task<double> Div(double first, double second)
         {
-            return Math.Pow(digit, 3);
+            throw new NotImplementedException();
         }
 
-        public double Diff(double first, double second)
+        public Task<double> Ln(double digit)
         {
-            return first - second;
+            throw new NotImplementedException();
         }
 
-        public double Div(double first, double second)
+        public Task<double> Minus(double digit)
         {
-            if (second == 0)
-                throw new CalculationException();
-
-            return first / second;
+            throw new NotImplementedException();
         }
 
-        public double ePow(double degree)
+        public Task<double> Mult(double first, double second)
         {
-            return Math.Pow(Math.E, degree);
+            throw new NotImplementedException();
         }
 
-        public double Ln(double digit)
+        public Task<double> PowY(double digit, double degree)
         {
-            return Math.Log(digit);
+            throw new NotImplementedException();
         }
 
-        public double Log10(double digit)
+        public Task<double> PowY(double digit, int degree, int scale)
         {
-            return Math.Log10(digit);
+            throw new NotImplementedException();
         }
 
-        public double Minus(double digit)
+        public Task<double> Reverse(double digit)
         {
-            return -digit;
+            throw new NotImplementedException();
         }
 
-        public double Mult(double first, double second)
+        public Task<double> Sin(double digit)
         {
-            return first * second;
+            throw new NotImplementedException();
         }
 
-        public double PowY(double digit, double degree)
+        public Task<double> Sqrt(double digit)
         {
-            return Math.Pow(digit, degree);
+            throw new NotImplementedException();
         }
 
-        public double Reverse(double digit)
+        public Task<double> Square(double digit)
         {
-            return 1/digit;
+            throw new NotImplementedException();
         }
 
-        public double Sin(double digit)
+        public Task<double> Sum(double first, double second)
         {
-            return Math.Sin(digit);
-        }
-
-        public double Sinh(double digit)
-        {
-            return Math.Sinh(digit);
-        }
-
-        public double Sqrt(double digit)
-        {
-            return Math.Sqrt(digit);
-        }
-
-        public double Square(double digit)
-        {
-            return Math.Pow(digit, 2);
-        }
-
-        public double Sum(double first, double second)
-        {
-            return first + second;
-        }
-
-        public double Tan(double digit)
-        {
-            return Math.Tan(digit);
-        }
-
-        public double Tanh(double digit)
-        {
-            return Math.Tanh(digit);
-        }
-
-        public double TenPow(double degree)
-        {
-            return Math.Pow(10, degree);
-        }
-
-        public double Yqrt(double digit, double y)
-        {
-            if (y == 0)
-                throw new CalculationException();
-
-            return Math.Pow(digit, 1 / y);
+            throw new NotImplementedException();
         }
     }
 }
