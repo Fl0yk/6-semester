@@ -147,7 +147,16 @@ namespace CalculatorProj.ViewModels
             catch (CalculationException ex)
             {
                 SetErrorState(ex.Message);
-                _buttonsMutex.ReleaseMutex();
+                return;
+            }
+            catch (Java.Lang.ArithmeticException ex)
+            {
+                SetErrorState(ex.Message);
+                return;
+            }
+            catch (Java.Lang.IllegalArgumentException ex)
+            {
+                SetErrorState(ex.Message);
                 return;
             }
 
@@ -262,6 +271,11 @@ namespace CalculatorProj.ViewModels
             {
                 SetErrorState(ex.Message);
             }
+            catch (Java.Lang.IllegalArgumentException ex)
+            {
+                SetErrorState(ex.Message);
+                return;
+            }
         }
 
 
@@ -289,17 +303,22 @@ namespace CalculatorProj.ViewModels
             catch (CalculationException ex)
             {
                 SetErrorState(ex.Message);
-                _buttonsMutex.ReleaseMutex();
                 return;
             }
+            catch (Java.Lang.ArithmeticException ex)
+            {
+                SetErrorState(ex.Message);
+                return;
+            }
+
             string lastOperand = "";
 
             switch (_curState.State)
             {
                 case State.SecondInit:
                     lastOperand = _curState.Second;
+                    ResetState();
                     _curState.First = resF1S;
-                    _curState.Second = "0";
                     break;
                 case State.ThirdInit:
                     lastOperand = _curState.Third;
@@ -611,6 +630,16 @@ namespace CalculatorProj.ViewModels
                 SetErrorState();
                 return "0";
             }
+            catch (Java.Lang.ArithmeticException ex)
+            {
+                SetErrorState(ex.Message);
+                return "0";
+            }
+            catch (Java.Lang.IllegalArgumentException ex)
+            {
+                SetErrorState(ex.Message);
+                return "0";
+            }
 
             switch (_curState.State)
             {
@@ -621,11 +650,6 @@ namespace CalculatorProj.ViewModels
                 default:
                     return resF1S;
             }
-        }
-
-        private bool LastIsBinaryOp()
-        {
-            return Constants.BinaryOpDict.Keys.Contains(Expression.Last().ToString());
         }
 
         #endregion

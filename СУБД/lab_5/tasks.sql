@@ -94,6 +94,7 @@ BEGIN
         INSERT INTO Tab3Log (id, operation, op_time, n_id, o_id, n_name, o_name, n_fk, o_fk) 
         VALUES (tab1_id_seq.nextval, 'UPDATE', SYSTIMESTAMP, :NEW.id, :OLD.id, :NEW.name, :OLD.name, :NEW.Tab1_Id, :OLD.Tab1_Id);
     ELSIF DELETING THEN
+        DBMS_OUTPUT.PUT_LINE('hui');
         INSERT INTO Tab3Log (id, operation, op_time, n_id, o_id, n_name, o_name, n_fk, o_fk) 
         VALUES (tab1_id_seq.nextval, 'DELETE', SYSTIMESTAMP, NULL, :OLD.id, NULL, :OLD.name, NULL, :OLD.Tab1_Id);
     END IF;
@@ -280,29 +281,22 @@ END get_html;
         v_file_handle := UTL_FILE.FOPEN('MY_DIRECTORY', 'tab1.html', 'W');
         UTL_FILE.PUT_LINE(v_file_handle, result);
         UTL_FILE.FCLOSE(v_file_handle);
+
+        UPDATE LastOtchet SET Time = p_datetime WHERE TableName = 'Tab1';
     END Tab1_report;
 
 
     -- Получение отчета с момента последнего отчета
     PROCEDURE Tab1_report AS
-        v_file_handle UTL_FILE.FILE_TYPE;
-        v_file_text CLOB;
-        v_pattern VARCHAR2(100) := 'Таблица 1 с ([^<]+)';
-        v_match VARCHAR2(100);
-        v_line_number NUMBER := 1;
+        v_time TIMESTAMP;
     BEGIN
-        v_file_handle := UTL_FILE.FOPEN('MY_DIRECTORY', 'tab1.html', 'r');    
-        LOOP
-            UTL_FILE.GET_LINE(v_file_handle, v_file_text);
-            IF v_line_number = 6 THEN
-                EXIT;
-            END IF;
-            v_line_number := v_line_number + 1;
-        END LOOP;  
-        UTL_FILE.FCLOSE(v_file_handle);
-        
-        v_match := REGEXP_SUBSTR(v_file_text, v_pattern, 1, 1, NULL, 1);
-        Tab1_report(v_match);
+        SELECT Time INTO v_time FROM LastOtchet WHERE TableName = 'Tab1';
+
+        IF v_time IS NULL THEN
+            SELECT MIN(op_time) INTO v_time FROM Tab1Log;
+        END IF;
+
+        Tab1_report(v_time);
     END Tab1_report;
 
     -- Получение отчета по времени
@@ -330,24 +324,15 @@ END get_html;
 
     -- Получение отчета с момента последнего отчета
     PROCEDURE Tab2_report AS
-        v_file_handle UTL_FILE.FILE_TYPE;
-        v_file_text CLOB;
-        v_pattern VARCHAR2(100) := 'Таблица 2 с ([^<]+)';
-        v_match VARCHAR2(100);
-        v_line_number NUMBER := 1;
+        v_time TIMESTAMP;
     BEGIN
-        v_file_handle := UTL_FILE.FOPEN('MY_DIRECTORY', 'tab2.html', 'r');    
-        LOOP
-            UTL_FILE.GET_LINE(v_file_handle, v_file_text);
-            IF v_line_number = 6 THEN
-                EXIT;
-            END IF;
-            v_line_number := v_line_number + 1;
-        END LOOP;  
-        UTL_FILE.FCLOSE(v_file_handle);
-        
-        v_match := REGEXP_SUBSTR(v_file_text, v_pattern, 1, 1, NULL, 1);
-        Tab2_report(v_match);
+        SELECT Time INTO v_time FROM LastOtchet WHERE TableName = 'Tab2';
+
+        IF v_time IS NULL THEN
+            SELECT MIN(op_time) INTO v_time FROM Tab2Log;
+        END IF;
+
+        Tab2_report(v_time);
     END Tab2_report;
 
     -- Получение отчета по времени
@@ -367,7 +352,7 @@ END get_html;
 
         result := get_html(title, insert_count, update_count, delete_count);
 
-        v_file_handle := UTL_FILE.FOPEN('MY_DIRECTORY', 'tab1.html', 'W');
+        v_file_handle := UTL_FILE.FOPEN('MY_DIRECTORY', 'tab3.html', 'W');
         UTL_FILE.PUT_LINE(v_file_handle, result);
         UTL_FILE.FCLOSE(v_file_handle);
     END Tab3_report;
@@ -375,24 +360,15 @@ END get_html;
 
     -- Получение отчета с момента последнего отчета
     PROCEDURE Tab3_report AS
-        v_file_handle UTL_FILE.FILE_TYPE;
-        v_file_text CLOB;
-        v_pattern VARCHAR2(100) := 'Таблица 3 с ([^<]+)';
-        v_match VARCHAR2(100);
-        v_line_number NUMBER := 1;
+        v_time TIMESTAMP;
     BEGIN
-        v_file_handle := UTL_FILE.FOPEN('MY_DIRECTORY', 'tab3.html', 'r');    
-        LOOP
-            UTL_FILE.GET_LINE(v_file_handle, v_file_text);
-            IF v_line_number = 6 THEN
-                EXIT;
-            END IF;
-            v_line_number := v_line_number + 1;
-        END LOOP;  
-        UTL_FILE.FCLOSE(v_file_handle);
-        
-        v_match := REGEXP_SUBSTR(v_file_text, v_pattern, 1, 1, NULL, 1);
-        Tab3_report(v_match);
+        SELECT Time INTO v_time FROM LastOtchet WHERE TableName = 'Tab3';
+
+        IF v_time IS NULL THEN
+            SELECT MIN(op_time) INTO v_time FROM Tab3Log;
+        END IF;
+
+        Tab3_report(v_time);
     END Tab3_report;
 END;
 /

@@ -14,7 +14,7 @@ CREATE TABLE Tab3 (
     Id NUMBER PRIMARY KEY,
     Name VARCHAR2(20),
     Tab1_Id INT,
-    FOREIGN KEY (Tab1_Id) REFERENCES TAb1(Id)
+    FOREIGN KEY (Tab1_Id) REFERENCES TAb1(Id) ON DELETE CASCADE
 );
 
 
@@ -40,11 +40,13 @@ END;
 
 -- Получаем отчет
 BEGIN
-    Tab1_report(TO_TIMESTAMP('21.04.24 10:53:39'));
+    otchet_packege.Tab1_report(TO_TIMESTAMP('21.04.24 10:53:39'));
 END;
 /
 
 SELECT * FROM Tab2;
+DELETE FROM Tab3;
+DELETE FROM Lab3Log;
 
 INSERT INTO Tab2 VALUES(1, 'tab2 1', CURRENT_TIMESTAMP);
 INSERT INTO Tab2 VALUES(2, 'tab2 1', SYSTIMESTAMP);
@@ -56,13 +58,38 @@ DELETE FROM Tab2 WHERE Id = 1;
 
 -- Откатываем данные
 BEGIN
-    recovery_package.Tab1_recovery(5);
+    recovery_package.Tab2_recovery(5);
     --recovery_package.Tab1_recovery(TO_TIMESTAMP('21.04.24 10:53:39'));
 END;
 /
 
 -- Получаем отчет
 BEGIN
-    Tab1_report(TO_TIMESTAMP('21.04.24 10:53:39'));
+    otchet_packege.Tab2_report(TO_TIMESTAMP('21.04.24 10:53:39'));
+END;
+/
+
+SELECT * FROM Tab3;
+DELETE FROM Tab3;
+DELETE FROM Lab3Log;
+
+INSERT INTO Tab3 VALUES(1, 'tab3 1', 1);
+INSERT INTO Tab3 VALUES(2, 'tab3 2', 1);
+INSERT INTO Tab3 VALUES(3, 'tab3 3', 1);
+
+UPDATE Tab3 SET name = 'tab 3 new' WHERE Id = 2;
+
+DELETE FROM Tab3 WHERE Id = 1;
+
+-- Откатываем данные
+BEGIN
+    recovery_package.Tab2_recovery(5);
+    --recovery_package.Tab1_recovery(TO_TIMESTAMP('21.04.24 10:53:39'));
+END;
+/
+
+-- Получаем отчет
+BEGIN
+    otchet_packege.Tab2_report(TO_TIMESTAMP('21.04.24 10:53:39'));
 END;
 /

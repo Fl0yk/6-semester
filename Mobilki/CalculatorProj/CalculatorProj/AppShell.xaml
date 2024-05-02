@@ -5,12 +5,17 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:local="clr-namespace:CalculatorProj"
     xmlns:pages="clr-namespace:CalculatorProj.Pages"
-    Shell.FlyoutBehavior="Disabled"
+    Shell.FlyoutBehavior="Flyout"
     Title="Calculator">
 
     <ShellContent
-    Title="Calculator"
-    ContentTemplate="{DataTemplate pages:CalculatorPage}"
-    Route="CalculatorPage" />
+        Title="Калькулятор"
+        ContentTemplate="{DataTemplate pages:CalculatorPage}"
+        Route="CalculatorPage" />
 
+    <ShellContent
+        Title="Остальное"
+        ContentTemplate="{DataTemplate pages:HistoryAndTheme}"
+        Route="HistoryAndThemePage" />
+    
 </Shell>
