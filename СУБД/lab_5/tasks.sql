@@ -1,3 +1,5 @@
+-- Журналирование + откат
+
 CREATE TABLE Tab1Log(
     id NUMBER PRIMARY KEY,
     operation VARCHAR2(10),
@@ -46,6 +48,60 @@ CREATE SEQUENCE tab3_id_seq
 START WITH 1
 INCREMENT BY 1;
 
+CREATE TABLE TabsLog(
+    id NUMBER PRIMARY KEY,
+    op_time TIMESTAMP,
+    tab_id NUMBER,
+    tab_type NUMBER
+);
+
+CREATE SEQUENCE tabs_id_seq
+START WITH 1
+INCREMENT BY 1;
+
+CREATE OR REPLACE TRIGGER Tabs_1_logger
+BEFORE INSERT OR DELETE 
+ON Tab1Log FOR EACH ROW
+DECLARE
+BEGIN
+    IF INSERTING THEN
+        INSERT INTO TabsLog (id, op_time, tab_id, tab_type) 
+        VALUES (tabs_id_seq.nextval, CURRENT_TIMESTAMP, :NEW.id, 1);
+    ELSIF DELETING THEN
+        DELETE FROM TabsLog WHERE tab_id = :OLD.id AND tab_type = 1;
+    END IF;
+END;
+/
+
+CREATE OR REPLACE TRIGGER Tabs_2_logger
+BEFORE INSERT OR DELETE 
+ON Tab2Log FOR EACH ROW
+DECLARE
+BEGIN
+    IF INSERTING THEN
+        INSERT INTO TabsLog (id, op_time, tab_id, tab_type) 
+        VALUES (tabs_id_seq.nextval, CURRENT_TIMESTAMP, :NEW.id, 2);
+    ELSIF DELETING THEN
+        DELETE FROM TabsLog WHERE tab_id = :OLD.id AND tab_type = 2;
+    END IF;
+END;
+/
+
+CREATE OR REPLACE TRIGGER Tabs_3_logger
+BEFORE INSERT OR DELETE 
+ON Tab3Log FOR EACH ROW
+DECLARE
+BEGIN
+    IF INSERTING THEN
+        INSERT INTO TabsLog (id, op_time, tab_id, tab_type) 
+        VALUES (tabs_id_seq.nextval, CURRENT_TIMESTAMP, :NEW.id, 3);
+    ELSIF DELETING THEN
+        DELETE FROM TabsLog WHERE tab_id = :OLD.id AND tab_type = 3;
+    END IF;
+END;
+/
+
+
 CREATE OR REPLACE TRIGGER Tab1_logger
 BEFORE INSERT OR UPDATE OR DELETE 
 ON Tab1 FOR EACH ROW
@@ -53,14 +109,20 @@ DECLARE
 BEGIN
     IF INSERTING THEN
         INSERT INTO Tab1Log (id, operation, op_time, n_id, o_id, n_name, o_name, n_val, o_val) 
-        VALUES (tab1_id_seq.nextval, 'INSERT', SYSTIMESTAMP, :NEW.id, NULL, :NEW.name, NULL, :NEW.val, NULL);
+        VALUES (tab1_id_seq.nextval, 'INSERT', CURRENT_TIMESTAMP, :NEW.id, NULL, :NEW.name, NULL, :NEW.val, NULL);
     ELSIF UPDATING THEN
         INSERT INTO Tab1Log (id, operation, op_time, n_id, o_id, n_name, o_name, n_val, o_val) 
-        VALUES (tab1_id_seq.nextval, 'UPDATE', SYSTIMESTAMP, :NEW.id, :OLD.id, :NEW.name, :OLD.name, :NEW.val, :OLD.val);
-    ELSIF DELETING THEN
-        INSERT INTO Tab1Log (id, operation, op_time, n_id, o_id, n_name, o_name, n_val, o_val) 
-        VALUES (tab1_id_seq.nextval, 'DELETE', SYSTIMESTAMP, NULL, :OLD.id, NULL, :OLD.name, NULL, :OLD.val);
-    END IF;
+        VALUES (tab1_id_seq.nextval, 'UPDATE', CURRENT_TIMESTAMP, :NEW.id, :OLD.id, :NEW.name, :OLD.name, :NEW.val, :OLD.val);
+END;
+/
+
+CREATE OR REPLACE TRIGGER Tab1_logger_Del
+AFTER DELETE 
+ON Tab1 FOR EACH ROW
+DECLARE
+BEGIN
+    INSERT INTO Tab1Log (id, operation, op_time, n_id, o_id, n_name, o_name, n_val, o_val) 
+    VALUES (tab1_id_seq.nextval, 'DELETE', CURRENT_TIMESTAMP, NULL, :OLD.id, NULL, :OLD.name, NULL, :OLD.val);
 END;
 /
 
@@ -71,35 +133,139 @@ DECLARE
 BEGIN
     IF INSERTING THEN
         INSERT INTO Tab2Log (id, operation, op_time, n_id, o_id, n_name, o_name, n_time, o_time) 
-        VALUES (tab2_id_seq.nextval, 'INSERT', SYSTIMESTAMP, :NEW.id, NULL, :NEW.name, NULL, :NEW.time, NULL);
+        VALUES (tab2_id_seq.nextval, 'INSERT', CURRENT_TIMESTAMP, :NEW.id, NULL, :NEW.name, NULL, :NEW.time, NULL);
     ELSIF UPDATING THEN
         INSERT INTO Tab2Log (id, operation, op_time, n_id, o_id, n_name, o_name, n_time, o_time) 
-        VALUES (tab2_id_seq.nextval, 'UPDATE', SYSTIMESTAMP, :NEW.id, :OLD.id, :NEW.name, :OLD.name, :NEW.time, :OLD.time);
+        VALUES (tab2_id_seq.nextval, 'UPDATE', CURRENT_TIMESTAMP, :NEW.id, :OLD.id, :NEW.name, :OLD.name, :NEW.time, :OLD.time);
     ELSIF DELETING THEN
         INSERT INTO Tab2Log (id, operation, op_time, n_id, o_id, n_name, o_name, n_time, o_time) 
-        VALUES (tab2_id_seq.nextval, 'DELETE', SYSTIMESTAMP, NULL, :OLD.id, NULL, :OLD.name, NULL, :OLD.time);
+        VALUES (tab2_id_seq.nextval, 'DELETE', CURRENT_TIMESTAMP, NULL, :OLD.id, NULL, :OLD.name, NULL, :OLD.time);
     END IF;
 END;
 /
 
 CREATE OR REPLACE TRIGGER Tab3_logger
-BEFORE INSERT OR UPDATE OR DELETE 
+BEFORE INSERT OR UPDATE
 ON Tab3 FOR EACH ROW
 DECLARE
 BEGIN
     IF INSERTING THEN
         INSERT INTO Tab3Log (id, operation, op_time, n_id, o_id, n_name, o_name, n_fk, o_fk) 
-        VALUES (tab1_id_seq.nextval, 'INSERT', SYSTIMESTAMP, :NEW.id, NULL, :NEW.name, NULL, :NEW.Tab1_Id, NULL);
+        VALUES (tab3_id_seq.nextval, 'INSERT', CURRENT_TIMESTAMP, :NEW.id, NULL, :NEW.name, NULL, :NEW.Tab1_Id, NULL);
     ELSIF UPDATING THEN
         INSERT INTO Tab3Log (id, operation, op_time, n_id, o_id, n_name, o_name, n_fk, o_fk) 
-        VALUES (tab1_id_seq.nextval, 'UPDATE', SYSTIMESTAMP, :NEW.id, :OLD.id, :NEW.name, :OLD.name, :NEW.Tab1_Id, :OLD.Tab1_Id);
-    ELSIF DELETING THEN
-        DBMS_OUTPUT.PUT_LINE('hui');
-        INSERT INTO Tab3Log (id, operation, op_time, n_id, o_id, n_name, o_name, n_fk, o_fk) 
-        VALUES (tab1_id_seq.nextval, 'DELETE', SYSTIMESTAMP, NULL, :OLD.id, NULL, :OLD.name, NULL, :OLD.Tab1_Id);
-    END IF;
+        VALUES (tab3_id_seq.nextval, 'UPDATE', CURRENT_TIMESTAMP, :NEW.id, :OLD.id, :NEW.name, :OLD.name, :NEW.Tab1_Id, :OLD.Tab1_Id);
 END;
 /
+
+CREATE OR REPLACE TRIGGER Tab3_logger_Del
+AFTER DELETE 
+ON Tab3 FOR EACH ROW
+DECLARE
+BEGIN
+    INSERT INTO Tab3Log (id, operation, op_time, n_id, o_id, n_name, o_name, n_fk, o_fk) 
+        VALUES (tab3_id_seq.nextval, 'DELETE', CURRENT_TIMESTAMP, NULL, :OLD.id, NULL, :OLD.name, NULL, :OLD.Tab1_Id);
+END;
+/
+
+
+CREATE OR REPLACE PACKAGE recovery_package AS
+    PROCEDURE Tabs_recovery(p_datetime TIMESTAMP);
+    PROCEDURE Tabs_recovery(p_seconds INT);
+END recovery_package;
+/
+
+CREATE OR REPLACE PACKAGE BODY recovery_package AS
+
+    PROCEDURE Tabs_recovery(p_datetime TIMESTAMP) AS
+        tab1_record Tab1Log%ROWTYPE;
+        tab2_record Tab2Log%ROWTYPE;
+        tab3_record Tab3Log%ROWTYPE;
+    BEGIN
+        FOR action IN (SELECT * FROM TabsLog WHERE p_datetime < op_time ORDER BY id DESC)
+        LOOP
+            -- Если действие для первой таблицы
+            IF action.tab_type = 1 THEN
+                SELECT * INTO tab1_record FROM Tab1Log WHERE id = action.tab_id;
+
+                IF tab1_record.operation = 'INSERT' THEN
+                    DELETE FROM Tab1 WHERE id = tab1_record.n_id;
+                END IF;
+
+                IF tab1_record.operation = 'UPDATE' THEN
+                    UPDATE Tab1 SET
+                        id = tab1_record.o_id,
+                        name = tab1_record.o_name,
+                        val = tab1_record.o_val
+                    WHERE id = tab1_record.n_id;
+                END IF;
+
+                IF tab1_record.operation = 'DELETE' THEN
+                    INSERT INTO Tab1 VALUES (tab1_record.o_id, tab1_record.o_name, tab1_record.o_val);
+                END IF;
+
+            -- Если действие для второй таблицы
+            ELSIF action.tab_type = 2 THEN
+                SELECT * INTO tab2_record FROM Tab2Log WHERE id = action.tab_id;
+
+                IF tab2_record.operation = 'INSERT' THEN
+                    DELETE FROM Tab2 WHERE id = tab2_record.n_id;
+                END IF;
+
+                IF tab2_record.operation = 'UPDATE' THEN
+                    UPDATE Tab2 SET
+                        id = tab2_record.o_id,
+                        name = tab2_record.o_name,
+                        time = tab2_record.o_time
+                    WHERE id = tab2_record.n_id;
+                END IF;
+
+                IF tab2_record.operation = 'DELETE' THEN
+                    INSERT INTO Tab2 VALUES (tab2_record.o_id, tab2_record.o_name, tab2_record.o_time);
+                END IF;
+            -- Если действие для третьей таблицы
+            ELSIF action.tab_type = 3 THEN
+                SELECT * INTO tab3_record FROM Tab3Log WHERE id = action.tab_id;
+
+                IF tab3_record.operation = 'INSERT' THEN
+                    DELETE FROM Tab3 WHERE id = tab3_record.n_id;
+                END IF;
+
+                IF tab3_record.operation = 'UPDATE' THEN
+                    UPDATE Tab3 SET
+                        id = tab3_record.o_id,
+                        name = tab3_record.o_name,
+                        Tab1_Id = tab3_record.o_fk
+                    WHERE id = tab3_record.n_id;
+                END IF;
+
+                IF tab3_record.operation = 'DELETE' THEN
+                    INSERT INTO Tab3 VALUES (tab3_record.o_id, tab3_record.o_name, tab3_record.o_fk);
+                END IF;
+            END IF;
+        END LOOP;
+
+        DELETE FROM Tab1Log WHERE op_time > p_datetime;
+        DELETE FROM Tab2Log WHERE op_time > p_datetime;
+        DELETE FROM Tab3Log WHERE op_time > p_datetime;
+    END Tabs_recovery;
+
+
+    PROCEDURE Tabs_recovery(p_seconds INT) AS
+    BEGIN
+        Tabs_recovery(CURRENT_TIMESTAMP - INTERVAL '1' SECOND * p_seconds);
+    END Tabs_recovery;
+
+END recovery_package;
+/
+
+
+
+
+
+
+-- СТАРОЕ!!! НИНАДА!!!
+
 
 CREATE OR REPLACE PACKAGE recovery_package AS
     PROCEDURE Tab1_recovery(p_datetime TIMESTAMP);
@@ -108,6 +274,8 @@ CREATE OR REPLACE PACKAGE recovery_package AS
     PROCEDURE Tab2_recovery(p_seconds INT);
     PROCEDURE Tab3_recovery(p_datetime TIMESTAMP);
     PROCEDURE Tab3_recovery(p_seconds INT);
+    PROCEDURE Tabs_recovery(p_datetime TIMESTAMP);
+    PROCEDURE Tabs_recovery(p_seconds INT);
 END recovery_package;
 /
 
@@ -136,10 +304,9 @@ CREATE OR REPLACE PACKAGE BODY recovery_package AS
         DELETE FROM Tab1Log WHERE op_time > p_datetime;
     END;
 
-    DBMS_OUTPUT.PUT_LINE('End loop');
     PROCEDURE Tab1_recovery(p_seconds INT) AS
     BEGIN
-        Tab1_recovery(SYSTIMESTAMP - INTERVAL '1' SECOND * p_seconds);
+        Tab1_recovery(CURRENT_TIMESTAMP - INTERVAL '1' SECOND * p_seconds);
     END Tab1_recovery;
 
 
@@ -165,12 +332,12 @@ CREATE OR REPLACE PACKAGE BODY recovery_package AS
         END LOOP;
 
         DELETE FROM Tab2Log WHERE op_time > p_datetime;
-    END;
+    END Tab2_recovery;
 
 
     PROCEDURE Tab2_recovery(p_seconds INT) AS
     BEGIN
-        Tab2_recovery(SYSTIMESTAMP - INTERVAL '1' SECOND * p_seconds);
+        Tab2_recovery(CURRENT_TIMESTAMP - INTERVAL '1' SECOND * p_seconds);
     END Tab2_recovery;
 
 
@@ -196,13 +363,95 @@ CREATE OR REPLACE PACKAGE BODY recovery_package AS
         END LOOP;
 
         DELETE FROM Tab3Log WHERE op_time > p_datetime;
-    END;
+    END Tab3_recovery;
 
 
     PROCEDURE Tab3_recovery(p_seconds INT) AS
     BEGIN
-        Tab3_recovery(SYSTIMESTAMP - INTERVAL '1' SECOND * p_seconds);
+        Tab3_recovery(CURRENT_TIMESTAMP - INTERVAL '1' SECOND * p_seconds);
     END Tab3_recovery;
+
+    PROCEDURE Tabs_recovery(p_datetime TIMESTAMP) AS
+        TYPE t_tab1 IS TABLE OF Tab1Log%ROWTYPE;
+        tab1_record t_tab1;
+        TYPE t_tab2 IS TABLE OF Tab2Log%ROWTYPE;
+        tab3_record t_tab2;
+        TYPE t_tab3 IS TABLE OF Tab3Log%ROWTYPE;
+        tab3_record t_tab3;
+    BEGIN
+        FOR action IN (SELECT * FROM TabsLog WHERE p_datetime < op_time ORDER BY id DESC)
+        LOOP
+            -- Если действие для первой таблицы
+            IF action.tab_type = 1 THEN
+                SELECT * INTO tab1_record FROM Tab1Log WHERE id = action.tab_id;
+
+                IF tab1_record.operation = 'INSERT' THEN
+                    DELETE FROM Tab1 WHERE id = tab1_record.n_id;
+                END IF;
+
+                IF tab1_record.operation = 'UPDATE' THEN
+                    UPDATE Tab1 SET
+                        id = tab1_record.o_id,
+                        name = tab1_record.o_name,
+                        val = tab1_record.o_val
+                    WHERE id = tab1_record.n_id;
+                END IF;
+
+                IF tab1_record.operation = 'DELETE' THEN
+                    INSERT INTO Tab1 VALUES (tab1_record.o_id, tab1_record.o_name, tab1_record.o_val);
+                END IF;
+
+            -- Если действие для второй таблицы
+            ELSIF action.tab_type = 2 THEN
+                SELECT * INTO tab2_record FROM Tab2Log WHERE id = action.tab_id;
+
+                IF tab2_record.operation = 'INSERT' THEN
+                    DELETE FROM Tab2 WHERE id = tab2_record.n_id;
+                END IF;
+
+                IF tab2_record.operation = 'UPDATE' THEN
+                    UPDATE Tab2 SET
+                        id = tab2_record.o_id,
+                        name = tab2_record.o_name,
+                        time = tab2_record.o_time
+                    WHERE id = tab2_record.n_id;
+                END IF;
+
+                IF tab2_record.operation = 'DELETE' THEN
+                    INSERT INTO Tab2 VALUES (tab2_record.o_id, tab2_record.o_name, tab2_record.o_time);
+                END IF;
+            -- Если действие для третьей таблицы
+            ELSIF action.tab_type = 3 THEN
+                SELECT * INTO tab3_record FROM Tab2Log WHERE id = action.tab_id;
+
+                IF tab3_record.operation = 'INSERT' THEN
+                    DELETE FROM Tab3 WHERE id = tab3_record.n_id;
+                END IF;
+
+                IF tab3_record.operation = 'UPDATE' THEN
+                    UPDATE Tab3 SET
+                        id = tab3_record.o_id,
+                        name = tab3_record.o_name,
+                        Tab1_Id = tab3_record.o_fk
+                    WHERE id = tab3_record.n_id;
+                END IF;
+
+                IF tab3_record.operation = 'DELETE' THEN
+                    INSERT INTO Tab3 VALUES (tab3_record.o_id, tab3_record.o_name, tab3_record.o_fk);
+                END IF;
+            END IF;
+        END LOOP;
+
+        DELETE FROM Tab1Log WHERE op_time > p_datetime;
+        DELETE FROM Tab2Log WHERE op_time > p_datetime;
+        DELETE FROM Tab3Log WHERE op_time > p_datetime;
+    END Tabs_recovery;
+
+
+    PROCEDURE Tabs_recovery(p_seconds INT) AS
+    BEGIN
+        Tabs_recovery(CURRENT_TIMESTAMP - INTERVAL '1' SECOND * p_seconds);
+    END Tabs_recovery;
 
 END recovery_package;
 /

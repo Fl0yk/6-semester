@@ -4,7 +4,9 @@ using CalculatorProj.Exceptions;
 using CalculatorProj.Models.Interfaces;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Firebase.Database;
 using System.Globalization;
+using System.Text.Json;
 
 namespace CalculatorProj.ViewModels
 {
@@ -16,7 +18,7 @@ namespace CalculatorProj.ViewModels
         [ObservableProperty]
         private string expression ="";
 
-        private Mutex _buttonsMutex = new();
+        //private Mutex _buttonsMutex = new();
 
         //private const int _inputSize = 15;
 
@@ -25,6 +27,8 @@ namespace CalculatorProj.ViewModels
         private CalculatorState _curState = new();
 
         private Stack<CalculatorState> _states = new();
+
+        private FirebaseClient _firebaseClient = new("https://calculatorproj-4b58f-default-rtdb.europe-west1.firebasedatabase.app/");
 
         public CalculatorViewModel(IEngineeringCalculator<Java.Math.BigDecimal> baseCalculator)
         {
@@ -130,7 +134,7 @@ namespace CalculatorProj.ViewModels
             if (!Constants.BinaryOpDict.ContainsKey(operation))
             {
                 SetErrorState("Данная операция не существует");
-                _buttonsMutex.ReleaseMutex();
+                //_buttonsMutex.ReleaseMutex();
                 return;
             }
 
@@ -230,7 +234,7 @@ namespace CalculatorProj.ViewModels
             if (!Constants.UnaryOpDict.ContainsKey(operation))
             {
                 SetErrorState("Такой операции нет");
-                _buttonsMutex.ReleaseMutex();
+                //_buttonsMutex.ReleaseMutex();
                 return;
             }
             Display = "Ждем-с";
@@ -332,14 +336,21 @@ namespace CalculatorProj.ViewModels
 
             if (Expression.Length == 0)
             {
-                _buttonsMutex.ReleaseMutex();
+                //_buttonsMutex.ReleaseMutex();
                 return;
             }
             
             // Могут сломать унарные операторы
             if (Expression.Last() != ')')
                 Expression += lastOperand;
+
             Expression += "=";
+
+            try
+            {
+                await _firebaseClient.Child("Expressions").PostAsync(JsonSerializer.Serialize(Expression + _curState.First));
+            }
+            catch { }
         }
 
         [RelayCommand]
@@ -435,7 +446,7 @@ namespace CalculatorProj.ViewModels
 
             if (_states.Count == 0)
             {
-                _buttonsMutex.ReleaseMutex();
+                //_buttonsMutex.ReleaseMutex();
                 return;
             }
 
@@ -447,7 +458,7 @@ namespace CalculatorProj.ViewModels
 
             if (_curState.State == State.Error)
             {
-                _buttonsMutex.ReleaseMutex();
+                //_buttonsMutex.ReleaseMutex();
                 return;
             }
 

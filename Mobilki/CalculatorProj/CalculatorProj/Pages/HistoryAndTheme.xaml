@@ -2,11 +2,29 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="CalculatorProj.Pages.HistoryAndTheme"
-             Title="HistoryAndTheme">
-    <VerticalStackLayout>
-        <Label 
-            Text="Welcome to .NET MAUI!"
-            VerticalOptions="Center" 
-            HorizontalOptions="Center" />
+             Title="История и тема">
+    <VerticalStackLayout Padding="20, 20, 15, 0" HorizontalOptions="Center">
+        <!-- Элемент Label для отображения строки -->
+        <Label x:Name="myLabel" Text="Строка для вывода токена" />
+
+        <!-- Кнопка или жест для копирования строки в буфер обмена -->
+        <HorizontalStackLayout Padding="10">
+            <Button Text="Токен" Clicked="GetToken_Clicked" />
+            <Button Text="Копировать" Clicked="CopyButton_Clicked" />
+        </HorizontalStackLayout>
+
+        <Button Text="Отпечаток" Clicked="Fingerprint_Clicked"/>
+
+        <Label Text="Тема прогресса" />
+        <Button x:Name="themeBtn" Text="Цвет" Clicked="ChangeTheme_Clicked" />
+
+        <ProgressBar x:Name="progBar" Margin="20, 0, 0, 0" />
+        <Button Text="Начать прогресс" Clicked="StartProgress_Clicked" />
+
+        <Label Text="История калькулятора"   Margin="20, 0, 0, 0"/>
+        <CollectionView ItemsSource="{Binding Expressions}">
+
+        </CollectionView>
+        
     </VerticalStackLayout>
 </ContentPage>
